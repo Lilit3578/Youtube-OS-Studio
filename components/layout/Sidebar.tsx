@@ -4,76 +4,199 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import config, { toolsConfig } from "@/config";
-import Image from "next/image";
+import {
+    PanelLeft,
+    Home,
+    BarChart,
+    MessageSquare,
+    Image as ImageIcon,
+    QrCode,
+    User,
+    Settings,
+    Lock
+} from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { ReactNode } from "react";
+
+// --- Minimal Shadcn-like Components ---
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
+function Button({
+    className,
+    variant = "default",
+    size = "default",
+    children,
+    ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant?: "default" | "ghost" | "secondary";
+    size?: "default" | "sm" | "icon";
+}) {
+    const variants = {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    };
+
+    const sizes = {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        icon: "h-9 w-9",
+    };
+
+    return (
+        <button
+            className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                variants[variant],
+                sizes[size],
+                className
+            )}
+            {...props}
+        >
+            {children}
+        </button>
+    );
+}
+
+function Separator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+    return (
+        <div className={cn("shrink-0 bg-border h-[1px] w-full", className)} {...props} />
+    );
+}
+
+// --- Sidebar Specific Components ---
+
+function SidebarItem({
+    label,
+    icon,
+    active,
+    disabled,
+    href
+}: {
+    label: string;
+    icon: ReactNode;
+    active?: boolean;
+    disabled?: boolean;
+    href?: string;
+}) {
+    if (disabled) {
+        return (
+            <div className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-base-content/40 cursor-not-allowed">
+                {icon}
+                <span>{label}</span>
+            </div>
+        );
+    }
+
+    const content = (
+        <div
+            className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-base-200 hover:text-base-content",
+                active && "bg-base-200 text-base-content"
+            )}
+        >
+            {icon}
+            <span>{label}</span>
+        </div>
+    );
+
+    return href ? <Link href={href}>{content}</Link> : content;
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+    return (
+        <div className="px-3 py-2 text-xs font-medium text-base-content/40 uppercase tracking-wider">
+            {children}
+        </div>
+    );
+}
+
+// --- Main Sidebar Component ---
 
 const Sidebar = () => {
     const pathname = usePathname();
     const { data: session } = useSession();
 
+    // Map tool IDs to Lucide icons
+    const getToolIcon = (id: string) => {
+        switch (id) {
+            case "metadata": return <BarChart className="h-4 w-4" />;
+            case "comments": return <MessageSquare className="h-4 w-4" />;
+            case "thumbnail": return <ImageIcon className="h-4 w-4" />;
+            case "qr": return <QrCode className="h-4 w-4" />;
+            default: return <Lock className="h-4 w-4" />;
+        }
+    };
+
     return (
-        <aside className="drawer-side z-50 lg:h-auto w-72 lg:w-72 border-r border-base-300 bg-base-100 hidden lg:block">
-            <div className="h-full flex flex-col p-4">
-                {/* Logo */}
-                <div className="mb-8 px-2 flex items-center gap-2">
-                    <div className="font-bold text-xl">{config.appName}</div>
+        <aside className="hidden lg:flex flex-col h-full w-72 bg-base-100 p-4 border-r border-base-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-2 mb-2">
+                <div className="text-xl leading-none">
+                    <span className="font-serif italic text-base-content">youtube</span>{" "}
+                    <span className="font-serif text-base-content">OS</span>
                 </div>
 
-                {/* Navigation */}
-                <ul className="menu w-full p-0 gap-2 text-base-content/90">
-                    <li>
-                        <Link
-                            href="/dashboard"
-                            className={`${pathname === "/dashboard" || pathname === "/dashboard/settings"
-                                ? "active !bg-primary text-primary-content"
-                                : ""
-                                }`}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="w-5 h-5"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-                                />
-                            </svg>
-                            Dashboard
-                        </Link>
-                    </li>
+                <Button variant="ghost" size="icon">
+                    <PanelLeft className="h-4 w-4" />
+                </Button>
+            </div>
 
-                    <div className="divider my-2"></div>
-                    <li className="menu-title">Tools</li>
+            <Separator className="my-3 opacity-10 bg-base-content" />
 
-                    {toolsConfig.map((tool) => (
-                        <li key={tool.id}>
-                            {tool.status === "active" ? (
-                                <Link
-                                    href={tool.href}
-                                    className={`${pathname.startsWith(tool.href)
-                                        ? "active !bg-primary text-primary-content"
-                                        : ""
-                                        }`}
-                                >
-                                    {tool.name}
-                                </Link>
-                            ) : (
-                                <span className="opacity-50 cursor-not-allowed justify-between">
-                                    {tool.name}
-                                    <span className="badge badge-xs badge-ghost">Soon</span>
-                                </span>
-                            )}
-                        </li>
-                    ))}
-                </ul>
+            {/* Navigation */}
+            <nav className="flex flex-col gap-1 flex-1 overflow-y-auto no-scrollbar">
+                <SidebarItem
+                    label="home"
+                    icon={<Home className="h-4 w-4" />}
+                    active={pathname === "/dashboard"}
+                    href="/dashboard"
+                />
 
-                <div className="mt-auto">
-                    {/* Bottom content if needed */}
-                </div>
+                <SectionLabel>tools</SectionLabel>
+
+                {toolsConfig.filter(t => t.status === "active").map(tool => (
+                    <SidebarItem
+                        key={tool.id}
+                        label={tool.name}
+                        icon={getToolIcon(tool.id)}
+                        active={pathname.startsWith(tool.href)}
+                        href={tool.href}
+                    />
+                ))}
+
+                <SectionLabel>coming soon</SectionLabel>
+
+                <SidebarItem label="ai script writer" icon={<Lock className="h-4 w-4" />} disabled />
+                <SidebarItem label="channel audit" icon={<Lock className="h-4 w-4" />} disabled />
+                <SidebarItem label="competitor analysis" icon={<Lock className="h-4 w-4" />} disabled />
+            </nav>
+
+            <Separator className="my-3 opacity-10 bg-base-content" />
+
+            {/* CTA */}
+            <Button className="mb-3 w-full rounded-full text-xs uppercase bg-neutral text-neutral-content hover:bg-neutral/90">
+                request tool
+            </Button>
+
+            <Separator className="my-3 opacity-10 bg-base-content" />
+
+            {/* Footer */}
+            <div className="flex flex-col gap-1">
+                <SidebarItem
+                    label={session?.user?.name?.toLowerCase() || "user"}
+                    icon={<User className="h-4 w-4" />}
+                />
+                <SidebarItem
+                    label="settings"
+                    icon={<Settings className="h-4 w-4" />}
+                    active={pathname === "/dashboard/settings"}
+                    href="/dashboard/settings"
+                />
             </div>
         </aside>
     );

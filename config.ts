@@ -9,32 +9,32 @@ const themes = {
 
 export const toolsConfig = [
   {
-    id: "qr",
-    name: "QR Generator",
-    href: "/tools/qr",
-    status: "active"
-  },
-  {
-    id: "thumbnail",
-    name: "Thumbnail Compressor",
-    href: "/tools/thumbnail",
-    status: "active"
-  },
-  {
     id: "metadata",
-    name: "Metadata Inspector",
+    name: "analyze video data",
     href: "/tools/metadata",
     status: "active"
   },
   {
     id: "comments",
-    name: "Comment Explorer",
+    name: "extract comments",
     href: "/tools/comments",
     status: "active"
   },
   {
+    id: "thumbnail",
+    name: "compress thumbnail",
+    href: "/tools/thumbnail",
+    status: "active"
+  },
+  {
+    id: "qr",
+    name: "generate qr code",
+    href: "/tools/qr",
+    status: "active"
+  },
+  {
     id: "script-writer",
-    name: "AI Script Writer",
+    name: "ai script writer",
     href: "#",
     status: "coming-soon"
   }
