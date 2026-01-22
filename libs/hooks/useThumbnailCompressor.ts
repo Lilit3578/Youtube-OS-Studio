@@ -1,7 +1,16 @@
 import { useState, useCallback } from "react";
 import imageCompression from "browser-image-compression";
-import { ProcessedImageItemDetails } from "@/components/tools/thumbnail/results/ProcessedImageList";
-import { processImage } from "@/libs/image-processing";
+import { processImage } from "@/libs/thumbnail-utils";
+
+export interface ProcessedImageItemDetails {
+    id: string;
+    file: File;
+    blob: Blob | null;
+    status: "processing" | "done" | "error";
+    errorMsg?: string;
+    compressionRatio?: number;
+    hasResolutionWarning?: boolean;
+}
 
 export function useThumbnailCompressor() {
     const [items, setItems] = useState<ProcessedImageItemDetails[]>([]);

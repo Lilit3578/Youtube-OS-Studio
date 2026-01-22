@@ -75,3 +75,11 @@ export async function processImage(
         img.src = url;
     });
 }
+
+/**
+ * Helper to check if a file is an image
+ */
+export const isImageFile = (file: File): boolean => {
+    const validTypes = ["image/jpeg", "image/png", "image/jpg"];
+    return validTypes.includes(file.type);
+};
