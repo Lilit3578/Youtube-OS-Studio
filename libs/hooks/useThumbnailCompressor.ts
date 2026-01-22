@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import imageCompression from "browser-image-compression";
-import { processImage } from "@/libs/thumbnail-utils";
+import { processImage, THUMBNAIL_CONFIG } from "@/libs/thumbnail-utils";
 
 export interface ProcessedImageItemDetails {
     id: string;
@@ -30,15 +30,15 @@ export function useThumbnailCompressor() {
 
             const { processedFile, hasResolutionWarning } = processingResult;
 
-            // Optimization: If already under 2MB, return immediately to preserve max quality
-            if (processedFile.size <= 2 * 1024 * 1024) {
+            // Optimization: If already under the YouTube limit, return immediately to preserve max quality
+            if (processedFile.size <= THUMBNAIL_CONFIG.MAX_SIZE_BYTES) {
                 // console.log("File is under 2MB after crop. Skipping compression.");
                 return { blob: processedFile, hasResolutionWarning };
             }
 
             const options = {
-                maxSizeMB: 2, // Target max size as per requirements
-                maxWidthOrHeight: 1920, // Full HD max
+                maxSizeMB: THUMBNAIL_CONFIG.MAX_SIZE_BYTES / 1024 / 1024, // Target max size as per requirements
+                maxWidthOrHeight: THUMBNAIL_CONFIG.TARGET_WIDTH_LARGE, // Full HD max
                 useWebWorker: true,
                 initialQuality: 1.0, // Start at MAX quality as requested
                 alwaysKeepResolution: true, // CRITICAL: Do not downscale dimensions
@@ -49,20 +49,22 @@ export function useThumbnailCompressor() {
             // console.log(`Size after compression: ${(compressedBlob.size / 1024 / 1024).toFixed(2)} MB`);
 
             // Verify size constraint (library usually handles this, but good to double check or catch edge cases)
-            if (compressedBlob.size > 2 * 1024 * 1024) {
-                throw new Error("Image could not be compressed below 2MB without significant quality loss.");
+            if (compressedBlob.size > THUMBNAIL_CONFIG.MAX_SIZE_BYTES) {
+                throw new Error(`Image could not be compressed below ${THUMBNAIL_CONFIG.MAX_SIZE_BYTES / 1024 / 1024}MB without significant quality loss.`);
             }
 
             return { blob: compressedBlob, hasResolutionWarning };
 
-        } catch (error: any) {
+        } catch (error) {
             console.error("Compression failed:", error);
+            const message = error instanceof Error ? error.message : "Image compression failed. Please try again.";
+
             // Re-throw with our specific messages if they aren't already
-            if (error.message.includes("browser limitations") || error.message.includes("compressed below 2MB")) {
+            if (message.includes("browser limitations") || message.includes("compressed below")) {
                 throw error;
             }
             // Generic fallback
-            throw new Error("Image compression failed. Please try again.");
+            throw new Error(message);
         }
     };
 

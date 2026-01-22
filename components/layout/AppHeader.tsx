@@ -18,17 +18,24 @@ const AppHeader = () => {
     };
 
     return (
-        <header className="navbar min-h-[4rem] px-8 pt-6 pb-2 justify-between bg-transparent">
-            <div className="flex-1">
-                <span className="font-serif text-2xl italic tracking-tight">{getPageTitle()}</span>
+        <header className="w-full flex items-center px-[20px] py-[2px] justify-between bg-transparent min-h-[4rem] px-8 pt-6 pb-2">
+            <div className="font-serif text-[20px] italic font-normal leading-[28px] text-[#141414]">
+                {getPageTitle()}
             </div>
-            <div className="flex-none">
-                <Link href="/help" className="flex items-center gap-2 text-sm font-medium text-base-content/60 hover:text-base-content transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><path d="M12 17h.01" /></svg>
+
+            <Link
+                href="/help"
+                className="flex items-center gap-2 px-[10px] py-[6px] rounded-[8px] hover:bg-neutral-100 transition-colors group"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#141414]">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                </svg>
+                <span className="font-sans text-[14px] font-normal leading-[23.8px] text-[#141414]">
                     help
-                </Link>
-            </div>
-            <Separator />
+                </span>
+            </Link>
         </header>
     );
 };

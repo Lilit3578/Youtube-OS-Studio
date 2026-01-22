@@ -1,3 +1,17 @@
+/**
+ * Constants for YouTube Thumbnail Processing
+ */
+export const THUMBNAIL_CONFIG = {
+    MAX_SIZE_BYTES: 2 * 1024 * 1024, // 2MB YouTube limit
+    UPLOAD_MAX_SIZE_BYTES: 10 * 1024 * 1024, // 10MB internal limit
+    TARGET_WIDTH_LARGE: 1920,
+    TARGET_HEIGHT_LARGE: 1080,
+    TARGET_WIDTH_SMALL: 1280,
+    TARGET_HEIGHT_SMALL: 720,
+    YT_MIN_WIDTH: 1280,
+    YT_MIN_HEIGHT: 720,
+};
+
 export async function processImage(
     file: File
 ): Promise<{ processedFile: File; hasResolutionWarning: boolean }> {
@@ -14,12 +28,12 @@ export async function processImage(
             // Smart Resolution Logic for YouTube
             // If original width >= 1920 -> Target 1920 x 1080
             // If original width < 1920 -> Target 1280 x 720 (Upscale if necessary)
-            const targetWidth = originalWidth >= 1920 ? 1920 : 1280;
-            const targetHeight = originalWidth >= 1920 ? 1080 : 720;
+            const targetWidth = originalWidth >= THUMBNAIL_CONFIG.TARGET_WIDTH_LARGE ? THUMBNAIL_CONFIG.TARGET_WIDTH_LARGE : THUMBNAIL_CONFIG.TARGET_WIDTH_SMALL;
+            const targetHeight = originalWidth >= THUMBNAIL_CONFIG.TARGET_WIDTH_LARGE ? THUMBNAIL_CONFIG.TARGET_HEIGHT_LARGE : THUMBNAIL_CONFIG.TARGET_HEIGHT_SMALL;
 
             // Detect if optimization required upscaling from a low-res original
             // YouTube minimum recommendation is 1280x720.
-            const hasResolutionWarning = originalWidth < 1280 || originalHeight < 720;
+            const hasResolutionWarning = originalWidth < THUMBNAIL_CONFIG.YT_MIN_WIDTH || originalHeight < THUMBNAIL_CONFIG.YT_MIN_HEIGHT;
 
             // Create canvas
             const canvas = document.createElement("canvas");

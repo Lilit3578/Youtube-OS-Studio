@@ -8,7 +8,9 @@ import toast from "react-hot-toast";
 
 // Internal 
 import { useThumbnailCompressor } from "@/libs/hooks/useThumbnailCompressor";
-import ProcessedImageItem from "./ProcessedImageItem";
+import ProcessedImageItem from "./processed-image-item";
+import { THUMBNAIL_CONFIG } from "@/libs/thumbnail-utils";
+import { formatBytes } from "@/libs/utils";
 
 export default function ImageCompressor() {
     const { items, addFiles } = useThumbnailCompressor();
@@ -33,9 +35,9 @@ export default function ImageCompressor() {
             toast.error("Unsupported file format. Only JPG and PNG images are supported.");
             return false;
         }
-        const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+        const MAX_SIZE = THUMBNAIL_CONFIG.UPLOAD_MAX_SIZE_BYTES;
         if (file.size > MAX_SIZE) {
-            toast.error("This image is too large. Please upload a smaller file.");
+            toast.error(`This image is too large. Please upload a file smaller than ${formatBytes(MAX_SIZE)}.`);
             return false;
         }
         return true;
@@ -77,16 +79,16 @@ export default function ImageCompressor() {
                 onDrop={handleDrop}
                 onClick={() => document.getElementById("thumbnail-upload-input")?.click()}
             >
-                <div className="w-5 h-5 relative flex items-center justify-center border border-neutral-950 rounded-[1px]">
-                    <div className="w-[16.25px] h-[13.75px] bg-neutral-950 absolute bottom-[3px]" />
-                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="14" viewBox="0 0 17 14" fill="none">
+                    <path d="M15 0H1.25C0.918479 0 0.600537 0.131696 0.366116 0.366116C0.131696 0.600537 0 0.918479 0 1.25V12.5C0 12.8315 0.131696 13.1495 0.366116 13.3839C0.600537 13.6183 0.918479 13.75 1.25 13.75H15C15.3315 13.75 15.6495 13.6183 15.8839 13.3839C16.1183 13.1495 16.25 12.8315 16.25 12.5V1.25C16.25 0.918479 16.1183 0.600537 15.8839 0.366116C15.6495 0.131696 15.3315 0 15 0ZM15 1.25V9.27734L12.9633 7.24141C12.8472 7.1253 12.7094 7.0332 12.5577 6.97037C12.406 6.90753 12.2435 6.87519 12.0793 6.87519C11.9151 6.87519 11.7526 6.90753 11.6009 6.97037C11.4492 7.0332 11.3114 7.1253 11.1953 7.24141L9.63281 8.80391L6.19531 5.36641C5.96092 5.13216 5.6431 5.00058 5.31172 5.00058C4.98034 5.00058 4.66252 5.13216 4.42813 5.36641L1.25 8.54453V1.25H15ZM1.25 10.3125L5.3125 6.25L11.5625 12.5H1.25V10.3125ZM15 12.5H13.3305L10.518 9.6875L12.0805 8.125L15 11.0453V12.5ZM9.375 4.6875C9.375 4.50208 9.42998 4.32082 9.533 4.16665C9.63601 4.01248 9.78243 3.89232 9.95373 3.82136C10.125 3.75041 10.3135 3.73184 10.4954 3.76801C10.6773 3.80419 10.8443 3.89348 10.9754 4.02459C11.1065 4.1557 11.1958 4.32275 11.232 4.5046C11.2682 4.68646 11.2496 4.87496 11.1786 5.04627C11.1077 5.21757 10.9875 5.36399 10.8333 5.467C10.6792 5.57002 10.4979 5.625 10.3125 5.625C10.0639 5.625 9.8254 5.52623 9.64959 5.35041C9.47377 5.1746 9.375 4.93614 9.375 4.6875Z" fill="#141414" />
+                </svg>
 
                 <div className="flex flex-col items-center justify-start gap-2">
                     <div className="text-center text-neutral-950 text-sm font-sans font-normal leading-relaxed break-words">
                         upload / drag image (png, jpeg)
                     </div>
                     <div className="text-center text-neutral-600/40 text-sm font-sans font-normal leading-relaxed break-words">
-                        max 10mb size
+                        max {formatBytes(THUMBNAIL_CONFIG.UPLOAD_MAX_SIZE_BYTES)} size
                     </div>
                 </div>
 
@@ -101,13 +103,13 @@ export default function ImageCompressor() {
             </Card>
 
             {/* Status Separator */}
-            {items.length > 0 && <div className="w-full border-t border-neutral-200/50" />}
+            {items.length > 0 && <Separator className="bg-neutral-200/50" />}
 
             {/* Processed Images List (Inlined) */}
-            <div className="w-full flex flex-col gap-4">
+            <div className="w-full flex flex-col gap-6">
                 {items.map((item, index) => (
-                    <div key={item.id} className="flex flex-col gap-4">
-                        {index > 0 && <Separator />}
+                    <React.Fragment key={item.id}>
+                        {index > 0 && <Separator className="bg-neutral-200/50" />}
                         <ProcessedImageItem
                             originalFile={item.file}
                             processedBlob={item.blob}
@@ -115,7 +117,7 @@ export default function ImageCompressor() {
                             errorMsg={item.errorMsg}
                             hasResolutionWarning={item.hasResolutionWarning}
                         />
-                    </div>
+                    </React.Fragment>
                 ))}
             </div>
         </div>
