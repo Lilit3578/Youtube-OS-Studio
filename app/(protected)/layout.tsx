@@ -1,3 +1,4 @@
+import React, { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/libs/next-auth";
 import config from "@/config";

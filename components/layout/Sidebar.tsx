@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { ReactNode } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 
 // --- Minimal Shadcn-like Components ---
 
@@ -36,9 +36,9 @@ function Button({
     size?: "default" | "sm" | "icon";
 }) {
     const variants = {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        default: "bg-slate-900 text-white hover:bg-slate-800 shadow",
+        ghost: "hover:bg-slate-100 hover:text-slate-900",
+        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
     };
 
     const sizes = {
@@ -50,7 +50,7 @@ function Button({
     return (
         <button
             className={cn(
-                "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50",
                 variants[variant],
                 sizes[size],
                 className
@@ -64,7 +64,7 @@ function Button({
 
 function Separator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
     return (
-        <div className={cn("shrink-0 bg-border h-[1px] w-full", className)} {...props} />
+        <div className={cn("shrink-0 bg-slate-200 h-[1px] w-full", className)} {...props} />
     );
 }
 

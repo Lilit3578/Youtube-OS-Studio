@@ -28,6 +28,7 @@ const toJSON = <T extends Document>(schema: Schema<T>) => {
         ret.id = ret._id.toString();
       }
       delete ret._id;
+      // @ts-ignore
       delete ret.__v;
     },
   });

@@ -1,15 +1,53 @@
 import mongoose from "mongoose";
 import User from "@/models/User";
 
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
+}
+
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+declare global {
+  // eslint-disable-next-line a11y/no-var-keyword
+  var mongoose: MongooseCache;
+}
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectMongo = async () => {
-  if (!process.env.MONGODB_URI) {
-    throw new Error(
-      "Add the MONGODB_URI environment variable inside .env.local to use mongoose"
-    );
+  if (cached.conn) {
+    return cached.conn;
   }
-  return mongoose
-    .connect(process.env.MONGODB_URI)
-    .catch((e) => console.error("Mongoose Client Error: " + e.message));
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      return mongoose;
+    });
+  }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e: any) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
 };
 
 export default connectMongo;

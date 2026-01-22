@@ -38,17 +38,17 @@ export const sendOpenAi = async (
     console.log('>>> ' + answer);
     console.log(
       'TOKENS USED: ' +
-        usage?.total_tokens +
-        ' (prompt: ' +
-        usage?.prompt_tokens +
-        ' / response: ' +
-        usage?.completion_tokens +
-        ')'
+      usage?.total_tokens +
+      ' (prompt: ' +
+      usage?.prompt_tokens +
+      ' / response: ' +
+      usage?.completion_tokens +
+      ')'
     );
     console.log('\n');
 
     return answer;
-  } catch (e) {
+  } catch (e: any) {
     console.error('GPT Error: ' + e?.response?.status, e?.response?.data);
     return null;
   }

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { toolsConfig } from "@/config";
 import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
 
 const AppHeader = () => {
     const pathname = usePathname();
@@ -27,6 +28,7 @@ const AppHeader = () => {
                     help
                 </Link>
             </div>
+            <Separator />
         </header>
     );
 };

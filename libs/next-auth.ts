@@ -50,30 +50,26 @@ export const authOptions = {
     signIn: async ({ user, account }: any) => {
       // Add custom fields to user document on sign in
       if (user && account) {
-        const { MongoClient } = await import("mongodb");
-        const client = new MongoClient(process.env.MONGODB_URI!);
-
-        try {
-          await client.connect();
-          const db = client.db();
-          const usersCollection = db.collection("users");
-
-          // Update user with custom fields if they don't exist
-          await usersCollection.updateOne(
-            { email: user.email },
-            {
-              $addToSet: { authProviders: account.provider },
-              $setOnInsert: {
-                usage: {
-                  metadataInspector: { count: 0, lastResetDate: new Date() },
-                  commentExplorer: { count: 0, lastResetDate: new Date() },
-                },
-              },
-            }
-          );
-        } finally {
-          await client.close();
+        const client = await connectMongo;
+        if (!client) {
+          return false;
         }
+        const db = client.db();
+        const usersCollection = db.collection("users");
+
+        // Update user with custom fields if they don't exist
+        await usersCollection.updateOne(
+          { email: user.email },
+          {
+            $addToSet: { authProviders: account.provider },
+            $setOnInsert: {
+              usage: {
+                metadataInspector: { count: 0, lastResetDate: new Date() },
+                commentExplorer: { count: 0, lastResetDate: new Date() },
+              },
+            },
+          }
+        );
       }
       return true;
     },

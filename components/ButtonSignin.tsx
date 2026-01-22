@@ -5,6 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import config from "@/config";
+import { Button } from "@/components/ui/button";
 
 // A simple button to sign in with our providers (Google & Magic Links).
 // It automatically redirects user to callbackUrl (config.auth.callbackUrl) after login, which is normally a private page for users to manage their accounts.
@@ -29,36 +30,32 @@ const ButtonSignin = ({
 
   if (status === "authenticated") {
     return (
-      <Link
-        href={config.auth.callbackUrl}
-        className={`btn ${extraStyle ? extraStyle : ""}`}
-      >
-        {session.user?.image ? (
-          <img
-            src={session.user?.image}
-            alt={session.user?.name || "Account"}
-            className="w-6 h-6 rounded-full shrink-0"
-            referrerPolicy="no-referrer"
-            width={24}
-            height={24}
-          />
-        ) : (
-          <span className="w-6 h-6 bg-base-300 flex justify-center items-center rounded-full shrink-0">
-            {session.user?.name?.charAt(0) || session.user?.email?.charAt(0)}
-          </span>
-        )}
-        {session.user?.name || session.user?.email || "Account"}
-      </Link>
+      <Button asChild className={extraStyle} variant="default">
+        <Link href={config.auth.callbackUrl}>
+          {session.user?.image ? (
+            <img
+              src={session.user?.image}
+              alt={session.user?.name || "Account"}
+              className="w-6 h-6 rounded-full shrink-0 mr-2"
+              referrerPolicy="no-referrer"
+              width={24}
+              height={24}
+            />
+          ) : (
+            <span className="w-6 h-6 bg-slate-100 flex justify-center items-center rounded-full shrink-0 mr-2">
+              {session.user?.name?.charAt(0) || session.user?.email?.charAt(0)}
+            </span>
+          )}
+          {session.user?.name || session.user?.email || "Account"}
+        </Link>
+      </Button>
     );
   }
 
   return (
-    <button
-      className={`btn ${extraStyle ? extraStyle : ""}`}
-      onClick={handleClick}
-    >
+    <Button className={extraStyle} onClick={handleClick}>
       {text}
-    </button>
+    </Button>
   );
 };
 
