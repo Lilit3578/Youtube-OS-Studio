@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatBytes } from "@/libs/utils";
-import { Download, AlertCircle, FileImage, BadgeCheck } from "lucide-react";
+import { Download, AlertCircle, FileImage, BadgeCheck, FileText } from "lucide-react";
 import {
     Popover,
     PopoverContent,
@@ -119,73 +119,124 @@ export default function ProcessedImageItem({
             <div className="flex-1 self-stretch flex flex-col justify-start items-start gap-4">
                 {/* File Info */}
                 <div className="self-stretch flex-1 flex flex-col justify-start items-start gap-1">
-                    <div className="text-neutral-950 text-sm font-sans font-medium leading-relaxed break-words flex items-center gap-2">
-                        {originalFile.name}  |  {stats ? stats.compStr : formatBytes(originalFile.size)}
+                    {/* Title Row with Download Button */}
+                    <div className="w-full flex items-center justify-between gap-2">
+                        <div className="text-neutral-950 text-sm font-sans font-medium leading-relaxed break-words flex items-center gap-2">
+                            {originalFile.name}
 
-                        {/* Resolution Warning Badge */}
-                        {hasResolutionWarning && status === "done" && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 textxs rounded-full font-normal border border-yellow-200" title="Image was upscaled to meet YouTube minimum 1280x720">
-                                <AlertCircle className="w-3 h-3" />
-                                <span className="text-[10px]">Upscaled</span>
-                            </span>
+                            {/* Resolution Warning Badge */}
+                            {hasResolutionWarning && status === "done" && (
+                                <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full font-normal border border-yellow-200" title="Image was upscaled to meet YouTube minimum 1280x720">
+                                    <AlertCircle className="w-3 h-3" />
+                                    <span className="text-[10px]">Upscaled</span>
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Download Button (Ghost) */}
+                        {status === "done" ? (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-auto px-2.5 py-1.5 hover:bg-neutral-100 rounded-lg flex items-center gap-2 cursor-pointer transition-colors"
+                                    >
+                                        <div className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                                            download
+                                        </div>
+                                        <div className="w-5 h-5 relative">
+                                            <div className="w-[17.5px] h-[15.63px] absolute left-[1.25px] top-[1.25px] bg-ink-1000" />
+                                        </div>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                    align="end"
+                                    sideOffset={6}
+                                    className="
+                                        w-[180px]
+                                        p-2
+                                        bg-white
+                                        rounded-xl
+                                        shadow-lg
+                                        border border-black/5
+                                    "
+                                >
+                                    <div className="flex flex-col gap-1">
+                                        {/* PNG */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDownload("png")}
+                                            className="
+                                            flex items-center justify-between
+                                            w-full
+                                            px-2.5 py-1.5
+                                            rounded-lg
+                                            text-left
+                                            hover:bg-black/5
+                                            transition-colors
+                                        "
+                                        >
+                                            <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                                png
+                                            </span>
+
+                                            <FileImage
+                                                className="w-5 h-5 text-ink-1000"
+                                                strokeWidth={1.5}
+                                            />
+                                        </button>
+
+                                        {/* JPEG */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDownload("jpg")}
+                                            className="
+                                            flex items-center justify-between
+                                            w-full
+                                            px-2.5 py-1.5
+                                            rounded-lg
+                                            text-left
+                                            hover:bg-black/5
+                                            transition-colors
+                                        "
+                                        >
+                                            <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                                jpeg
+                                            </span>
+
+                                            <FileText
+                                                className="w-5 h-5 text-ink-1000"
+                                                strokeWidth={1.5}
+                                            />
+                                        </button>
+                                    </div>
+                                </PopoverContent>
+
+                            </Popover>
+                        ) : status === "processing" ? (
+                            <div className="text-neutral-600 text-sm font-sans font-light">Processing...</div>
+                        ) : (
+                            <div className="text-destructive text-sm font-sans font-light">Error</div>
                         )}
                     </div>
-                    <div className="self-stretch text-neutral-600 text-sm font-sans font-light leading-relaxed break-words">
-                        Original file size: {formatBytes(originalFile.size)}
-                    </div>
-                </div>
 
-                {/* Actions & Status */}
-                <div className="self-stretch flex justify-between items-center">
-                    {status === "done" ? (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    className="h-10 px-6 bg-neutral-950 hover:bg-neutral-800 rounded-full flex justify-center items-center gap-2 cursor-pointer transition-all"
-                                >
-                                    <div className="w-4 h-4 relative overflow-hidden">
-                                        <div className="w-[9.33px] h-3 absolute left-[3.33px] top-0.5 border-[1.33px] border-white" />
-                                    </div>
-                                    <div className="text-white text-xs font-mono font-medium uppercase leading-4 break-words">
-                                        download
-                                    </div>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent align="start" className="w-48 p-1">
-                                <div className="grid gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="justify-start gap-2 cursor-pointer font-normal font-sans"
-                                        onClick={() => handleDownload("jpg")}
-                                    >
-                                        <FileImage className="w-4 h-4 text-muted-foreground" />
-                                        Download as JPG
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="justify-start gap-2 cursor-pointer font-normal font-sans"
-                                        onClick={() => handleDownload("png")}
-                                    >
-                                        <FileImage className="w-4 h-4 text-muted-foreground" />
-                                        Download as PNG
-                                    </Button>
-                                </div>
-                            </PopoverContent>
-                        </Popover>
+                    {/* Compression Stats and File Size Row */}
+                    {status === "done" && stats ? (
+                        <div className="w-full">
+                            <span className="text-ink-800 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">
+                                {stats.percent.toLowerCase()}
+                            </span>
+                            <span className="text-ink-500 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed"> | </span>
+                            <span className="text-ink-800 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">
+                                file size {stats.compStr.toLowerCase()}
+                            </span>
+                        </div>
+                    ) : status === "error" ? (
+                        <div className="text-destructive text-sm font-sans font-light">{errorMsg}</div>
                     ) : (
-                        <Button disabled className="h-10 px-6 bg-neutral-200 text-neutral-400 rounded-full flex justify-center items-center gap-2 cursor-not-allowed">
-                            {status === "processing" ? "Processing..." : "Error"}
-                        </Button>
+                        <div className="text-neutral-600 text-sm font-sans font-light">Optimizing...</div>
                     )}
-
-                    {/* Stats or Status Text */}
-                    <div className="flex-1 text-right text-neutral-950 text-sm font-sans font-medium leading-relaxed break-words">
-                        {status === "done" && stats && stats.percent}
-                        {status === "processing" && "Optimizing..."}
-                        {status === "error" && <span className="text-destructive">{errorMsg}</span>}
-                    </div>
                 </div>
             </div>
         </Card>

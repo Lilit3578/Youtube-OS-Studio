@@ -3,8 +3,16 @@
 import React, { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/libs/utils";
 import toast from "react-hot-toast";
+import { FileImage, FileText, Download } from "lucide-react";
+
 
 // Internal 
 import { useThumbnailCompressor } from "@/libs/hooks/useThumbnailCompressor";
@@ -65,6 +73,41 @@ export default function ImageCompressor() {
         }
     }, [addFiles]);
 
+    const handleDownloadAll = async (format: "png" | "jpg") => {
+        const completedItems = items.filter(item => item.status === "done" && item.blob);
+        if (completedItems.length === 0) return;
+
+        try {
+            const JSZip = (await import("jszip")).default;
+            const zip = new JSZip();
+
+            completedItems.forEach((item) => {
+                if (item.blob) {
+                    const nameWithoutExt = item.file.name.substring(0, item.file.name.lastIndexOf(".")) || item.file.name;
+                    const extension = format === "png" ? ".png" : ".jpg";
+                    const fullFilename = `${nameWithoutExt}-optimized${extension}`;
+                    zip.file(fullFilename, item.blob);
+                }
+            });
+
+            const content = await zip.generateAsync({ type: "blob" });
+            const url = URL.createObjectURL(content);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `compressed-thumbnails-${format}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success("All images downloaded!");
+        } catch (error) {
+            console.error("Failed to create zip:", error);
+            toast.error("Failed to make zip file.");
+        }
+    };
+
+    const completedCount = items.filter(i => i.status === "done").length;
+
     return (
         <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">
             {/* Upload Zone */}
@@ -104,6 +147,90 @@ export default function ImageCompressor() {
 
             {/* Status Separator */}
             {items.length > 0 && <Separator className="bg-neutral-200/50" />}
+
+            {/* Results Section */}
+            {items.length > 0 && (
+                <div className="w-full h-full flex justify-between items-center">
+                    <div className="text-center text-ink-1000 text-xl font-[var(--font-instrument-serif)] italic font-normal leading-7 break-words">
+                        results ({items.length})
+                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-auto px-2.5 py-1.5 hover:bg-neutral-100 rounded-lg flex items-center gap-2 cursor-pointer transition-colors"
+                            >
+                                <div className="text-center text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed break-words">
+                                    download all
+                                </div>
+                                <Download className="w-5 h-5 text-ink-1000" strokeWidth={1.5} />
+                            </Button>
+
+                        </PopoverTrigger>
+                        <PopoverContent
+                            align="end"
+                            sideOffset={6}
+                            className="
+                                w-[180px]
+                                p-2
+                                bg-white
+                                rounded-xl
+                                shadow-lg
+                                border border-black/5
+                            "
+                        >
+                            <div className="flex flex-col gap-1">
+                                {/* PNG */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDownloadAll("png")}
+                                    className="
+                                    flex items-center justify-between
+                                    w-full
+                                    px-2.5 py-1.5
+                                    rounded-lg
+                                    text-left
+                                    hover:bg-black/5
+                                    transition-colors
+                                "
+                                >
+                                    <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                        png
+                                    </span>
+
+                                    <FileImage className="w-5 h-5 text-ink-1000" strokeWidth={1.5} />
+                                </button>
+
+                                {/* JPEG */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDownloadAll("jpg")}
+                                    className="
+                                    flex items-center justify-between
+                                    w-full
+                                    px-2.5 py-1.5
+                                    rounded-lg
+                                    text-left
+                                    hover:bg-black/5
+                                    transition-colors
+                                "
+                                >
+                                    <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                        jpeg
+                                    </span>
+
+                                    <FileText className="w-5 h-5 text-ink-1000" strokeWidth={1.5} />
+                                </button>
+                            </div>
+                        </PopoverContent>
+
+
+                    </Popover>
+                </div>
+            )}
+
+            <Separator className="bg-neutral-200/50" />
 
             {/* Processed Images List (Inlined) */}
             <div className="w-full flex flex-col gap-6">
