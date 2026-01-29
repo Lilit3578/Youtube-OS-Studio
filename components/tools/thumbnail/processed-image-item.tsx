@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { formatBytes } from "@/libs/utils";
+import { formatBytes, cn } from "@/libs/utils";
 import { Download, AlertCircle, FileImage, BadgeCheck, FileText } from "lucide-react";
 import {
     Popover,
@@ -91,7 +91,10 @@ export default function ProcessedImageItem({
         <Card className="flex flex-row items-start gap-4 p-0 border-0 shadow-none bg-transparent">
             {/* Image Container with Compare Interaction */}
             <div
-                className="w-[335px] h-[189px] p-10 bg-white border border-neutral-200/50 rounded-lg flex flex-col justify-center items-center gap-2 overflow-hidden relative select-none cursor-pointer"
+                className={cn(
+                    "w-[335px] h-[189px] p-10 bg-white border border-neutral-200/50 rounded-lg flex flex-col justify-center items-center gap-2 overflow-hidden relative select-none cursor-pointer",
+                    status === "error" && "opacity-50"
+                )}
                 onMouseDown={() => status === "done" && setIsComparing(true)}
                 onMouseUp={() => setIsComparing(false)}
                 onMouseLeave={() => setIsComparing(false)}
@@ -103,7 +106,10 @@ export default function ProcessedImageItem({
                     <img
                         src={activeUrl}
                         alt={originalFile.name}
-                        className="w-[335px] h-[189px] object-cover"
+                        className={cn(
+                            "w-[335px] h-[189px] object-cover",
+                            status === "error" && "grayscale"
+                        )}
                     />
                 )}
 
@@ -216,9 +222,7 @@ export default function ProcessedImageItem({
                             </Popover>
                         ) : status === "processing" ? (
                             <div className="text-neutral-600 text-sm font-sans font-light">Processing...</div>
-                        ) : (
-                            <div className="text-destructive text-sm font-sans font-light">Error</div>
-                        )}
+                        ) : null}
                     </div>
 
                     {/* Compression Stats and File Size Row */}
@@ -233,7 +237,11 @@ export default function ProcessedImageItem({
                             </span>
                         </div>
                     ) : status === "error" ? (
-                        <div className="text-destructive text-sm font-sans font-light">{errorMsg}</div>
+                        <div className="w-full">
+                            <span className="text-[#B81616] text-sm font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">error</span>
+                            <span className="mx-4 text-ink-500 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">|</span>
+                            <span className="text-[#B81616] text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">{errorMsg}</span>
+                        </div>
                     ) : (
                         <div className="text-neutral-600 text-sm font-sans font-light">Optimizing...</div>
                     )}

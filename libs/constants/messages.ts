@@ -39,13 +39,13 @@ export const ERROR_MESSAGES = {
         THUMBNAIL: {
             EMPTY: "Upload an image to optimise it for YouTube thumbnails",
             UNSUPPORTED_FORMAT:
-                "Unsupported file format. Only JPG and PNG images are supported.",
-            TOO_LARGE: "This image is too large. Please upload a smaller file.",
+                "unsupported file format, only jpg and png images are supported",
+            TOO_LARGE: "image size too large, try uploading a smaller image",
             COMPRESSION_LIMIT:
-                "Unable to compress image to 2MB or less without significant quality loss.",
+                "unable to compress image below 2mb without significant quality loss",
             BROWSER_LIMIT:
-                "Image processing failed due to browser limitations. Please try a smaller image or refresh the page.",
-            GENERIC_FAIL: "Image compression failed. Please try again.",
+                "image processing failed due to browser limitations, try a smaller image or refresh the page",
+            GENERIC_FAIL: "image compression failed, please try again",
         },
         METADATA: {
             EMPTY: "Paste a YouTube video URL to inspect its metadata.",

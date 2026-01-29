@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import imageCompression from "browser-image-compression";
 import { processImage, THUMBNAIL_CONFIG } from "@/libs/thumbnail-utils";
+import { ERROR_MESSAGES } from "@/libs/constants/messages";
 
 export interface ProcessedImageItemDetails {
     id: string;
@@ -25,7 +26,7 @@ export function useThumbnailCompressor() {
                 // console.log(`Size before compression (Canvas Output): ${(processingResult.processedFile.size / 1024 / 1024).toFixed(2)} MB`);
             } catch (error) {
                 // Canvas/Browser error
-                throw new Error("Image processing failed due to browser limitations. Please try a smaller image or refresh the page.");
+                throw new Error(ERROR_MESSAGES.TOOLS.THUMBNAIL.BROWSER_LIMIT);
             }
 
             const { processedFile, hasResolutionWarning } = processingResult;
@@ -50,17 +51,17 @@ export function useThumbnailCompressor() {
 
             // Verify size constraint (library usually handles this, but good to double check or catch edge cases)
             if (compressedBlob.size > THUMBNAIL_CONFIG.MAX_SIZE_BYTES) {
-                throw new Error(`Image could not be compressed below ${THUMBNAIL_CONFIG.MAX_SIZE_BYTES / 1024 / 1024}MB without significant quality loss.`);
+                throw new Error(ERROR_MESSAGES.TOOLS.THUMBNAIL.COMPRESSION_LIMIT);
             }
 
             return { blob: compressedBlob, hasResolutionWarning };
 
         } catch (error) {
             console.error("Compression failed:", error);
-            const message = error instanceof Error ? error.message : "Image compression failed. Please try again.";
+            const message = error instanceof Error ? error.message : ERROR_MESSAGES.TOOLS.THUMBNAIL.GENERIC_FAIL;
 
             // Re-throw with our specific messages if they aren't already
-            if (message.includes("browser limitations") || message.includes("compressed below")) {
+            if (message === ERROR_MESSAGES.TOOLS.THUMBNAIL.BROWSER_LIMIT || message === ERROR_MESSAGES.TOOLS.THUMBNAIL.COMPRESSION_LIMIT) {
                 throw error;
             }
             // Generic fallback
@@ -68,17 +69,31 @@ export function useThumbnailCompressor() {
         }
     };
 
-    const addFiles = useCallback(async (files: File[]) => {
-        if (files.length === 0) return;
+    const addFiles = useCallback(async (fileInputs: { file: File; validationError: string | null }[]) => {
+        if (fileInputs.length === 0) return;
 
-        // 1. Create initial items (Status: Processing)
+        // 1. Create initial items
         // PREPEND items (Newest -> Oldest) logic: [newItems, ...prev]
         const newEntryIds: string[] = [];
+        const validFilesToCompress: { file: File; id: string }[] = [];
 
         setItems((prevItems) => {
-            const newItems: ProcessedImageItemDetails[] = files.map((file) => {
+            const newItems: ProcessedImageItemDetails[] = fileInputs.map(({ file, validationError }) => {
                 const id = Math.random().toString(36).substring(7);
                 newEntryIds.push(id);
+
+                if (validationError) {
+                    return {
+                        id,
+                        file,
+                        blob: null,
+                        status: "error",
+                        errorMsg: validationError
+                    };
+                }
+
+                // If no validation error, mark for compression
+                validFilesToCompress.push({ file, id });
 
                 return {
                     id,
@@ -90,15 +105,16 @@ export function useThumbnailCompressor() {
             return [...newItems, ...prevItems];
         });
 
+        if (validFilesToCompress.length === 0) return;
+
         setIsCompressing(true);
 
         // 2. Process files with Concurrency Limit (Max 3)
         const CONCURRENCY_LIMIT = 3;
         const executing: Promise<void>[] = [];
 
-        // Map files to task functions
-        const tasks = files.map((file, index) => async () => {
-            const id = newEntryIds[index];
+        // Map valid files to task functions
+        const tasks = validFilesToCompress.map(({ file, id }) => async () => {
             try {
                 const result = await compressFile(file);
                 const { blob: compressedBlob, hasResolutionWarning } = result;

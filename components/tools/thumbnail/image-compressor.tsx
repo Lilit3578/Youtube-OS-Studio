@@ -19,6 +19,7 @@ import { useThumbnailCompressor } from "@/libs/hooks/useThumbnailCompressor";
 import ProcessedImageItem from "./processed-image-item";
 import { THUMBNAIL_CONFIG } from "@/libs/thumbnail-utils";
 import { formatBytes } from "@/libs/utils";
+import { ERROR_MESSAGES } from "@/libs/constants/messages";
 
 export default function ImageCompressor() {
     const { items, addFiles } = useThumbnailCompressor();
@@ -37,25 +38,28 @@ export default function ImageCompressor() {
         setIsDragging(false);
     }, []);
 
-    const validateFile = (file: File): boolean => {
+    const validateFile = (file: File): string | null => {
         const validTypes = ["image/jpeg", "image/png", "image/jpg"];
         if (!validTypes.includes(file.type)) {
-            toast.error("Unsupported file format. Only JPG and PNG images are supported.");
-            return false;
+            return ERROR_MESSAGES.TOOLS.THUMBNAIL.UNSUPPORTED_FORMAT;
         }
         const MAX_SIZE = THUMBNAIL_CONFIG.UPLOAD_MAX_SIZE_BYTES;
         if (file.size > MAX_SIZE) {
-            toast.error(`This image is too large. Please upload a file smaller than ${formatBytes(MAX_SIZE)}.`);
-            return false;
+            return ERROR_MESSAGES.TOOLS.THUMBNAIL.TOO_LARGE;
         }
-        return true;
+        return null;
     };
 
     const onFilesSelected = (files: File[]) => {
-        const validFiles = files.filter(validateFile);
-        if (validFiles.length > 0) {
-            addFiles(validFiles);
-        }
+        if (files.length === 0) return;
+
+        // Map files with their validation errors
+        const filesWithValidation = files.map(file => ({
+            file,
+            validationError: validateFile(file)
+        }));
+
+        addFiles(filesWithValidation);
     };
 
     const handleDrop = useCallback((e: React.DragEvent) => {
