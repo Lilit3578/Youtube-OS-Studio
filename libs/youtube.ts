@@ -23,7 +23,7 @@ const YOUTUBE_API_KEY = process.env.GOOGLE_ID; // Using GOOGLE_ID as placeholder
 // I will use `process.env.YOUTUBE_API_KEY`.
 
 export const extractVideoId = (url: string): string | null => {
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
 };
@@ -103,12 +103,16 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
             .map((item: any) => {
                 const snippet = item.snippet.topLevelComment.snippet;
                 const text = snippet.textDisplay;
+                const totalReplyCount = item.snippet.totalReplyCount || 0;
 
-                // Emoji filtering: Remove comments that are ONLY emojis
-                // This regex matches strings that consist ONLY of emoji characters and whitespace
-                const isOnlyEmojis = /^[\p{Emoji}\s]+$/u.test(text);
+                // Emoji filtering: Remove comments that are ONLY emojis/symbols/whitespace
+                // We use a more specific regex to avoid matching numbers/punctuation as "emojis"
+                // The previous \p{Emoji} matches numbers 0-9 which is not desired.
+                // We'll strip all emojis, symbols, and whitespace. If nothing remains, it's emoji-only.
+                const stripped = text.replace(/[\p{Emoji_Presentation}\p{Symbol}\p{Punctuation}\s]/gu, "");
+                const isOnlyEmojis = stripped.length === 0;
 
-                if (isOnlyEmojis) return null;
+                if (isOnlyEmojis && text.length > 0) return null;
 
                 return {
                     id: item.id,
@@ -116,6 +120,7 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
                     authorName: snippet.authorDisplayName,
                     authorProfileImageUrl: snippet.authorProfileImageUrl,
                     likeCount: snippet.likeCount,
+                    replyCount: totalReplyCount,
                     publishedAt: snippet.publishedAt,
                     intent: classifyIntent(text),
                 };

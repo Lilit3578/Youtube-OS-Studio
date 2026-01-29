@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
         if (!videoId) {
             return NextResponse.json(
-                { error: "Invalid YouTube URL" },
+                { error: "Invalid YouTube URL", errorKey: "INVALID_URL" },
                 { status: 400 }
             );
         }
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
 
         if (user.usage.commentExplorer.count >= 20) {
             return NextResponse.json(
-                { error: "Daily limit of 20 requests reached." },
+                { error: "Daily limit of 20 requests reached.", errorKey: "QUOTA_EXCEEDED" },
                 { status: 429 }
             );
         }
@@ -92,8 +92,14 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error("Error in comment extraction API:", error);
+
+        let errorKey = "GENERIC_FAIL";
+        if (error.response?.status === 403 || error.status === 403) errorKey = "QUOTA_EXCEEDED";
+        if (error.message?.includes("disabled")) errorKey = "DISABLED";
+        if (error.message?.includes("no public")) errorKey = "NO_PUBLIC";
+
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            { error: error.message || "Internal Server Error", errorKey },
             { status: 500 }
         );
     }

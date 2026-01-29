@@ -6,6 +6,7 @@ export interface Comment {
     authorName: string;
     authorProfileImageUrl: string;
     likeCount: number;
+    replyCount: number;
     publishedAt: string;
     intent: CommentIntent;
 }

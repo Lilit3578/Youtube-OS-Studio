@@ -2,14 +2,9 @@
 
 import React from "react";
 import { Comment } from "@/types/comments";
-import { ThumbsUp, MoreVertical, Copy } from "lucide-react";
+import { ThumbsUp, Copy, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { toast } from "react-hot-toast";
 // Using Intl.NumberFormat directly in the component for compact notation
 
 interface CommentRowProps {
@@ -19,6 +14,7 @@ interface CommentRowProps {
 export default function CommentRow({ comment }: CommentRowProps) {
     const handleCopy = () => {
         navigator.clipboard.writeText(comment.text);
+        toast.success("Comment copied to clipboard");
     };
 
     return (
@@ -30,26 +26,24 @@ export default function CommentRow({ comment }: CommentRowProps) {
             </div>
 
             <div className="flex items-center gap-6 shrink-0">
-                <div className="flex items-center gap-2 text-neutral-400">
-                    <ThumbsUp className="w-4 h-4" strokeWidth={1.5} />
-                    <span className="text-xs font-medium min-w-[30px]">
-                        {new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(comment.likeCount)}
-                    </span>
+                <div className="flex items-center gap-4 text-neutral-400">
+                    <div className="flex items-center gap-2">
+                        <ThumbsUp className="w-4 h-4" strokeWidth={1.5} />
+                        <span className="text-xs font-medium min-w-[20px]">
+                            {new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(comment.likeCount)}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" strokeWidth={1.5} />
+                        <span className="text-xs font-medium min-w-[20px]">
+                            {new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(comment.replyCount)}
+                        </span>
+                    </div>
                 </div>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-300 hover:text-neutral-900 opacity-0 group-hover:opacity-100 transition-all">
-                            <MoreVertical className="w-4 h-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleCopy}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            <span>Copy text</span>
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 text-neutral-300 hover:text-neutral-900 opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                    <Copy className="w-4 h-4" />
+                </Button>
             </div>
         </div>
     );

@@ -3,6 +3,7 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 interface UrlInputSectionProps {
     url: string;
@@ -25,6 +26,7 @@ export default function UrlInputSection({ url, onChange, disabled }: UrlInputSec
                 disabled={disabled}
                 className="w-full bg-white border-neutral-200 focus:ring-1 focus:ring-black"
             />
+            <Separator className="bg-neutral-200/50" />
         </div>
     );
 }

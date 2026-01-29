@@ -8,6 +8,8 @@ import UrlInputSection from "@/components/tools/comments/UrlInputSection";
 import CommentsHeader from "@/components/tools/comments/CommentsHeader";
 import FilterTabs, { FilterType } from "@/components/tools/comments/FilterTabs";
 import CommentsList from "@/components/tools/comments/CommentsList";
+import InlineError from "@/components/tools/comments/InlineError";
+import { ERROR_MESSAGES } from "@/libs/constants/messages";
 import { Comment, CommentIntent, CommentResponse } from "@/types/comments";
 import { extractVideoId } from "@/libs/youtube"; // Using client-side safe export if possible, otherwise duplicate logic. 
 // Wait, libraries in `libs/` are usually shared. `axios` is in `libs/youtube.ts` so it might be Node.js only if it uses Node constructs, but `extractVideoId` is pure string manipulation.
@@ -24,6 +26,7 @@ export default function CommentExplorerPage() {
     const [comments, setComments] = useState<Comment[]>([]);
     const [filter, setFilter] = useState<FilterType>("all");
     const [hasSearched, setHasSearched] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [counts, setCounts] = useState({
         total: 0,
         question: 0,
@@ -44,7 +47,7 @@ export default function CommentExplorerPage() {
     }, [url]);
 
     const extractVideoIdClient = (url: string) => {
-        const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
         const match = url.match(regex);
         return match ? match[1] : null;
     };
@@ -55,6 +58,7 @@ export default function CommentExplorerPage() {
 
         setLoading(true);
         setHasSearched(true);
+        setError(null);
         setComments([]);
         setCounts({ total: 0, question: 0, request: 0, feedback: 0, other: 0 });
 
@@ -70,21 +74,27 @@ export default function CommentExplorerPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Failed to fetch comments");
+                // Map API errors to local ERROR_MESSAGES if possible, otherwise use data.error
+                const errorMsg = data.errorKey && (ERROR_MESSAGES.TOOLS.COMMENTS as any)[data.errorKey]
+                    ? (ERROR_MESSAGES.TOOLS.COMMENTS as any)[data.errorKey]
+                    : data.error || ERROR_MESSAGES.TOOLS.COMMENTS.GENERIC_FAIL;
+
+                setError(errorMsg);
+                return;
             }
 
             const resTypes = data as CommentResponse;
             setComments(resTypes.comments);
             setCounts({
                 total: resTypes.counts.total,
-                question: resTypes.counts.questions, // Note mapping difference s/questions/question if needed, but type says questions
+                question: resTypes.counts.questions,
                 request: resTypes.counts.requests,
                 feedback: resTypes.counts.feedback,
                 other: resTypes.counts.other
             });
 
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (err: any) {
+            setError(ERROR_MESSAGES.GLOBAL.NETWORK_ERROR);
         } finally {
             setLoading(false);
         }
@@ -94,6 +104,13 @@ export default function CommentExplorerPage() {
         if (filter === "all") return comments;
         return comments.filter((c) => c.intent === filter);
     }, [comments, filter]);
+
+    const handleCopyAll = () => {
+        if (filteredComments.length === 0) return;
+        const textToCopy = filteredComments.map(c => `- ${c.text}`).join("\n");
+        navigator.clipboard.writeText(textToCopy);
+        toast.success(`Copied ${filteredComments.length} comments to clipboard`);
+    };
 
     const handleDownload = (format: "csv" | "excel") => {
         if (comments.length === 0) return;
@@ -109,10 +126,11 @@ export default function CommentExplorerPage() {
             return text;
         };
 
-        const dataToExport = comments.map((c) => ({
-            Author: sanitize(c.authorName),
+        const dataToExport = comments.map((c, index) => ({
+            Line: index + 1,
             Date: c.publishedAt,
             Likes: c.likeCount,
+            Replies: c.replyCount,
             Intent: c.intent,
             Comment: sanitize(c.text),
         }));
@@ -164,10 +182,13 @@ export default function CommentExplorerPage() {
                 onDownloadConfig={handleDownload}
             />
 
+            {error && <InlineError message={error} className="mb-8" />}
+
             {comments.length > 0 && (
                 <FilterTabs
                     currentFilter={filter}
                     onFilterChange={setFilter}
+                    onCopyAll={handleCopyAll}
                     counts={mappedCounts}
                 />
             )}
