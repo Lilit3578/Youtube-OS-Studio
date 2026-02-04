@@ -15,7 +15,7 @@ export default function UrlInputSection({ url, onChange, disabled }: UrlInputSec
     return (
         <div className="flex flex-col gap-3">
             <Label htmlFor="youtube-url" className="text-sm font-medium text-neutral-900">
-                Youtube url
+                youtube url
             </Label>
             <Input
                 id="youtube-url"

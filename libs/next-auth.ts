@@ -5,24 +5,40 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import config from "@/config";
 import connectMongo from "./mongo";
 
+// Validate required environment variables at startup
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    `Missing required environment variable: NEXTAUTH_SECRET\n` +
+    `Please add it to your .env.local file.`
+  );
+}
+
+// Optional Google OAuth credentials
+const hasGoogleAuth = process.env.GOOGLE_ID && process.env.GOOGLE_SECRET;
+
 export const authOptions = {
   // Set any random key in .env.local
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
-    GoogleProvider({
-      // Follow the "Login with Google" tutorial to get your credentials
-      clientId: process.env.GOOGLE_ID!,
-      clientSecret: process.env.GOOGLE_SECRET!,
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.given_name ? profile.given_name : profile.name,
-          email: profile.email,
-          image: profile.picture,
-          createdAt: new Date(),
-        };
-      },
-    }),
+    // Google OAuth (optional - only enabled if credentials are provided)
+    ...(hasGoogleAuth
+      ? [
+        GoogleProvider({
+          // Follow the "Login with Google" tutorial to get your credentials
+          clientId: process.env.GOOGLE_ID!,
+          clientSecret: process.env.GOOGLE_SECRET!,
+          profile(profile) {
+            return {
+              id: profile.sub,
+              name: profile.given_name ? profile.given_name : profile.name,
+              email: profile.email,
+              image: profile.picture,
+              createdAt: new Date(),
+            };
+          },
+        }),
+      ]
+      : []),
     // Follow the "Login with Email" tutorial to set up your email server
     // Requires a MongoDB database. Set MONOGODB_URI env variable.
     ...(connectMongo
@@ -33,7 +49,7 @@ export const authOptions = {
             port: 465,
             auth: {
               user: "resend",
-              pass: process.env.RESEND_API_KEY,
+              pass: process.env.RESEND_API_KEY || "",
             },
           },
           from: config.resend.fromNoReply,
@@ -50,26 +66,34 @@ export const authOptions = {
     signIn: async ({ user, account }: any) => {
       // Add custom fields to user document on sign in
       if (user && account) {
-        const client = await connectMongo;
-        if (!client) {
-          return false;
-        }
-        const db = client.db();
-        const usersCollection = db.collection("users");
+        try {
+          const client = await connectMongo;
+          if (!client) {
+            console.error("MongoDB connection failed during sign-in");
+            return false;
+          }
 
-        // Update user with custom fields if they don't exist
-        await usersCollection.updateOne(
-          { email: user.email },
-          {
-            $addToSet: { authProviders: account.provider },
-            $setOnInsert: {
-              usage: {
-                metadataInspector: { count: 0, lastResetDate: new Date() },
-                commentExplorer: { count: 0, lastResetDate: new Date() },
+          const db = client.db();
+          const usersCollection = db.collection("users");
+
+          // Update user with custom fields if they don't exist
+          await usersCollection.updateOne(
+            { email: user.email },
+            {
+              $addToSet: { authProviders: account.provider },
+              $setOnInsert: {
+                usage: {
+                  metadataInspector: { count: 0, lastResetDate: new Date() },
+                  commentExplorer: { count: 0, lastResetDate: new Date() },
+                },
               },
             },
-          }
-        );
+            { upsert: false } // Don't create if doesn't exist (adapter handles creation)
+          );
+        } catch (error) {
+          console.error("Error updating user during sign-in:", error);
+          // Allow sign-in to proceed even if usage tracking fails
+        }
       }
       return true;
     },

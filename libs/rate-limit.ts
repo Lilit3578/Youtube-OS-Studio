@@ -16,12 +16,30 @@ interface RateLimitResult {
 }
 
 /**
+ * Get UTC midnight for a given date
+ * Always use UTC to prevent timezone manipulation attacks
+ */
+function getUTCMidnight(date: Date): Date {
+    const midnight = new Date(date);
+    midnight.setUTCHours(0, 0, 0, 0);
+    return midnight;
+}
+
+/**
+ * Get next UTC midnight
+ */
+function getNextUTCMidnight(date: Date): Date {
+    const midnight = getUTCMidnight(date);
+    midnight.setUTCDate(midnight.getUTCDate() + 1);
+    return midnight;
+}
+
+/**
  * Check if user is within rate limit and increment usage if allowed.
- * Resets at midnight in user's local timezone (from X-Timezone header).
+ * Resets at UTC midnight (server-controlled, not user-controlled).
  */
 export async function checkRateLimit(
-    toolType: ToolType,
-    timezone?: string
+    toolType: ToolType
 ): Promise<RateLimitResult> {
     const session = await auth();
 
@@ -38,33 +56,28 @@ export async function checkRateLimit(
     }
 
     // Get usage for this tool
-    const usage = user.usage?.[toolType] || { count: 0, lastResetDate: new Date() };
+    const usage = user.usage?.[toolType] || {
+        count: 0,
+        lastResetDate: new Date(),
+    };
     const lastReset = new Date(usage.lastResetDate);
 
-    // Calculate midnight in user's timezone (or UTC if not provided)
     const now = new Date();
-    const userTz = timezone || "UTC";
+    const todayMidnight = getUTCMidnight(now);
+    const lastResetMidnight = getUTCMidnight(lastReset);
 
-    // Get today's date at midnight in user's timezone
-    const todayMidnight = new Date(
-        now.toLocaleDateString("en-US", { timeZone: userTz })
-    );
-
-    // Check if last reset was before today's midnight
-    const needsReset = lastReset < todayMidnight;
+    // Check if we need to reset (different UTC day)
+    const needsReset = lastResetMidnight < todayMidnight;
 
     let currentCount = usage.count;
 
     if (needsReset) {
-        // Reset counter for new day
         currentCount = 0;
     }
 
     // Check if within limit
     if (currentCount >= DAILY_LIMIT) {
-        // Calculate next midnight for reset time
-        const nextMidnight = new Date(todayMidnight);
-        nextMidnight.setDate(nextMidnight.getDate() + 1);
+        const nextMidnight = getNextUTCMidnight(now);
 
         return {
             allowed: false,
@@ -81,14 +94,12 @@ export async function checkRateLimit(
         {
             $set: {
                 [`usage.${toolType}.count`]: newCount,
-                [`usage.${toolType}.lastResetDate`]: needsReset ? now : usage.lastResetDate,
+                [`usage.${toolType}.lastResetDate`]: needsReset ? now : lastReset,
             },
         }
     );
 
-    // Calculate next midnight for reset time
-    const nextMidnight = new Date(todayMidnight);
-    nextMidnight.setDate(nextMidnight.getDate() + 1);
+    const nextMidnight = getNextUTCMidnight(now);
 
     return {
         allowed: true,
@@ -102,17 +113,16 @@ export async function checkRateLimit(
  * Call at the start of API routes that need rate limiting.
  */
 export async function withRateLimit(
-    toolType: ToolType,
-    timezone?: string
+    toolType: ToolType
 ): Promise<{ error?: Response; result?: RateLimitResult }> {
     try {
-        const result = await checkRateLimit(toolType, timezone);
+        const result = await checkRateLimit(toolType);
 
         if (!result.allowed) {
             return {
                 error: new Response(
                     JSON.stringify({
-                        error: "Daily usage limit reached. Please try again tomorrow.",
+                        error: "Daily usage limit reached. Resets at midnight UTC.",
                         code: "RATE_LIMIT_EXCEEDED",
                         remaining: 0,
                         resetAt: result.resetAt.toISOString(),
@@ -143,7 +153,10 @@ export async function withRateLimit(
 
         return {
             error: new Response(
-                JSON.stringify({ error: "Internal server error", code: "SERVER_ERROR" }),
+                JSON.stringify({
+                    error: "Internal server error",
+                    code: "SERVER_ERROR",
+                }),
                 { status: 500, headers: { "Content-Type": "application/json" } }
             ),
         };

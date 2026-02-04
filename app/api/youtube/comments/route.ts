@@ -3,9 +3,26 @@ import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import { extractVideoId, fetchComments } from "@/libs/youtube";
+import { z } from "zod";
 
 // Set max duration for API route to 60 seconds
 export const maxDuration = 60;
+
+// Input validation schema
+const requestSchema = z.object({
+    url: z
+        .string()
+        .min(1, "URL is required")
+        .max(500, "URL is too long")
+        .trim()
+        .refine(
+            (url) => {
+                // Basic YouTube URL validation
+                return /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(url);
+            },
+            { message: "Invalid YouTube URL format" }
+        ),
+});
 
 export async function POST(req: Request) {
     try {
@@ -15,17 +32,36 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { url } = await req.json();
-
-        if (!url) {
-            return NextResponse.json({ error: "URL is required" }, { status: 400 });
+        // Parse and validate request body
+        let body;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json(
+                { error: "Invalid JSON in request body", errorKey: "INVALID_REQUEST" },
+                { status: 400 }
+            );
         }
 
-        const videoId = extractVideoId(url);
+        // Validate input with Zod
+        const validation = requestSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json(
+                {
+                    error: validation.error.issues[0].message,
+                    errorKey: "INVALID_URL",
+                },
+                { status: 400 }
+            );
+        }
 
+        const { url } = validation.data;
+
+        // Extract video ID
+        const videoId = extractVideoId(url);
         if (!videoId) {
             return NextResponse.json(
-                { error: "Invalid YouTube URL", errorKey: "INVALID_URL" },
+                { error: "Could not extract video ID from URL", errorKey: "INVALID_URL" },
                 { status: 400 }
             );
         }
@@ -45,11 +81,11 @@ export async function POST(req: Request) {
         const explorerUsage = user.usage?.commentExplorer || { count: 0, lastResetDate: new Date() };
         const lastReset = new Date(explorerUsage.lastResetDate);
 
-        // Check if it's a different day
+        // Check if it's a different day (UTC-based for consistency)
         const isSameDay =
-            now.getFullYear() === lastReset.getFullYear() &&
-            now.getMonth() === lastReset.getMonth() &&
-            now.getDate() === lastReset.getDate();
+            now.getUTCFullYear() === lastReset.getUTCFullYear() &&
+            now.getUTCMonth() === lastReset.getUTCMonth() &&
+            now.getUTCDate() === lastReset.getUTCDate();
 
         if (!isSameDay) {
             // Safe access to nested properties

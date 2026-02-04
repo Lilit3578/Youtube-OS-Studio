@@ -15,7 +15,8 @@ interface MongooseCache {
 }
 
 declare global {
-  // eslint-disable-next-line a11y/no-var-keyword
+  // Using var for global declaration is required by TypeScript
+  // eslint-disable-next-line no-var
   var mongoose: MongooseCache;
 }
 

@@ -7,17 +7,20 @@ import config, { toolsConfig } from "@/config";
 import {
     PanelLeft,
     Home,
-    BarChart,
+    Monitor,
     MessageSquare,
     Image as ImageIcon,
     QrCode,
     User,
     Settings,
-    Lock
+    Sparkles
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode, useRef } from "react";
+import { useSidebar } from "@/contexts/SidebarContext";
+import UserPopover from "@/components/UserPopover";
+import RequestToolModal from "@/components/modals/RequestToolModal";
 
 // --- Minimal Shadcn-like Components ---
 
@@ -83,11 +86,16 @@ function SidebarItem({
     disabled?: boolean;
     href?: string;
 }) {
+    const { isCollapsed } = useSidebar();
+
     if (disabled) {
         return (
-            <div className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-base-content/40 cursor-not-allowed">
+            <div className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-400 cursor-not-allowed",
+                isCollapsed && "justify-center px-2"
+            )}>
                 {icon}
-                <span>{label}</span>
+                {!isCollapsed && <span>{label}</span>}
             </div>
         );
     }
@@ -95,12 +103,13 @@ function SidebarItem({
     const content = (
         <div
             className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-base-200 hover:text-base-content",
-                active && "bg-base-200 text-base-content"
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900",
+                active && "bg-neutral-100 text-neutral-900",
+                isCollapsed && "justify-center px-2"
             )}
         >
             {icon}
-            <span>{label}</span>
+            {!isCollapsed && <span>{label}</span>}
         </div>
     );
 
@@ -108,8 +117,12 @@ function SidebarItem({
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
+    const { isCollapsed } = useSidebar();
+
+    if (isCollapsed) return null;
+
     return (
-        <div className="px-3 py-2 text-xs font-medium text-base-content/40 uppercase tracking-wider">
+        <div className="px-3 py-2 text-xs font-medium text-neutral-400 tracking-wide">
             {children}
         </div>
     );
@@ -118,31 +131,51 @@ function SectionLabel({ children }: { children: ReactNode }) {
 // --- Main Sidebar Component ---
 
 const Sidebar = () => {
+    const { isCollapsed, toggleSidebar } = useSidebar();
     const pathname = usePathname();
     const { data: session } = useSession();
+
+    // User popover state
+    const [userPopoverOpen, setUserPopoverOpen] = useState(false);
+    const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+    const userItemRef = useRef<HTMLDivElement>(null);
+
+    // Request tool modal state
+    const [requestToolModalOpen, setRequestToolModalOpen] = useState(false);
 
     // Map tool IDs to Lucide icons
     const getToolIcon = (id: string) => {
         switch (id) {
-            case "metadata": return <BarChart className="h-4 w-4" />;
+            case "metadata": return <Monitor className="h-4 w-4" />;
             case "comments": return <MessageSquare className="h-4 w-4" />;
             case "thumbnail": return <ImageIcon className="h-4 w-4" />;
             case "qr": return <QrCode className="h-4 w-4" />;
-            default: return <Lock className="h-4 w-4" />;
+            default: return <Sparkles className="h-4 w-4" />;
         }
     };
 
     return (
-        <aside className="hidden lg:flex flex-col h-full w-72 bg-base-100 p-4 border-r border-base-200">
+        <aside className={cn(
+            "hidden lg:flex flex-col h-full bg-base-100 p-4 border-r border-neutral-200 transition-all duration-300",
+            isCollapsed ? "w-20" : "w-72"
+        )}>
             {/* Header */}
-            <div className="flex items-center justify-between px-2 mb-2">
-                <div className="text-xl leading-none">
-                    <span className="font-serif italic text-base-content">youtube</span>{" "}
-                    <span className="font-serif text-base-content">OS</span>
-                </div>
+            <div className={cn(
+                "flex items-center px-2 mb-2",
+                isCollapsed ? "justify-center" : "justify-between"
+            )}>
+                {!isCollapsed && (
+                    <div className="text-xl leading-none">
+                        <span className="font-serif italic text-base-content">youtube</span>{" "}
+                        <span className="font-serif text-base-content">OS</span>
+                    </div>
+                )}
 
-                <Button variant="ghost" size="icon">
-                    <PanelLeft className="h-4 w-4" />
+                <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+                    <PanelLeft className={cn(
+                        "h-4 w-4 transition-transform duration-300",
+                        isCollapsed && "rotate-180"
+                    )} />
                 </Button>
             </div>
 
@@ -171,26 +204,47 @@ const Sidebar = () => {
 
                 <SectionLabel>coming soon</SectionLabel>
 
-                <SidebarItem label="ai script writer" icon={<Lock className="h-4 w-4" />} disabled />
-                <SidebarItem label="channel audit" icon={<Lock className="h-4 w-4" />} disabled />
-                <SidebarItem label="competitor analysis" icon={<Lock className="h-4 w-4" />} disabled />
+                <SidebarItem label="lorem ipsum" icon={<Sparkles className="h-4 w-4" />} disabled />
+                <SidebarItem label="lorem ipsum" icon={<Sparkles className="h-4 w-4" />} disabled />
+                <SidebarItem label="lorem ipsum" icon={<Sparkles className="h-4 w-4" />} disabled />
             </nav>
 
             <Separator className="my-3 opacity-10 bg-base-content" />
 
             {/* CTA */}
-            <Button className="mb-3 w-full rounded-full text-xs uppercase bg-neutral text-neutral-content hover:bg-neutral/90">
-                request tool
-            </Button>
+            {!isCollapsed && (
+                <Button
+                    onClick={() => setRequestToolModalOpen(true)}
+                    className="mb-3 w-full rounded-full text-xs uppercase bg-neutral text-neutral-content hover:bg-neutral/90 cursor-pointer"
+                >
+                    request tool
+                </Button>
+            )}
 
             <Separator className="my-3 opacity-10 bg-base-content" />
 
             {/* Footer */}
-            <div className="flex flex-col gap-1">
-                <SidebarItem
-                    label={session?.user?.name?.toLowerCase() || "user"}
-                    icon={<User className="h-4 w-4" />}
-                />
+            <div className="flex flex-col gap-1 relative">
+                <div
+                    ref={userItemRef}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (userItemRef.current) {
+                            const rect = userItemRef.current.getBoundingClientRect();
+                            setPopoverPosition({
+                                top: window.innerHeight - rect.top + 8,
+                                left: rect.left
+                            });
+                        }
+                        setUserPopoverOpen(!userPopoverOpen);
+                    }}
+                    className="cursor-pointer"
+                >
+                    <SidebarItem
+                        label={session?.user?.name?.toLowerCase() || "user"}
+                        icon={<User className="h-4 w-4" />}
+                    />
+                </div>
                 <SidebarItem
                     label="settings"
                     icon={<Settings className="h-4 w-4" />}
@@ -198,6 +252,21 @@ const Sidebar = () => {
                     href="/dashboard/settings"
                 />
             </div>
+
+            {/* User Popover */}
+            <UserPopover
+                email={session?.user?.email || ""}
+                name={session?.user?.name || "User"}
+                isOpen={userPopoverOpen}
+                onClose={() => setUserPopoverOpen(false)}
+                position={popoverPosition}
+            />
+
+            {/* Request Tool Modal */}
+            <RequestToolModal
+                isOpen={requestToolModalOpen}
+                onClose={() => setRequestToolModalOpen(false)}
+            />
         </aside>
     );
 };

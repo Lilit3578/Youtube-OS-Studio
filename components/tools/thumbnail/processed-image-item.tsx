@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatBytes, cn } from "@/libs/utils";
-import { Download, AlertCircle, FileImage, BadgeCheck, FileText } from "lucide-react";
+import { Download, FileImage, FileText, WarningCircle, CheckCircle } from "@phosphor-icons/react";
 import {
     Popover,
     PopoverContent,
@@ -88,11 +88,11 @@ export default function ProcessedImageItem({
     };
 
     return (
-        <Card className="flex flex-row items-start gap-4 p-0 border-0 shadow-none bg-transparent">
+        <Card className="flex flex-row items-start gap-8 p-0 border-0 shadow-none bg-transparent w-full">
             {/* Image Container with Compare Interaction */}
             <div
                 className={cn(
-                    "w-[335px] h-[189px] p-10 bg-white border border-neutral-200/50 rounded-lg flex flex-col justify-center items-center gap-2 overflow-hidden relative select-none cursor-pointer",
+                    "w-[335px] aspect-video bg-white border border-neutral-200 rounded-xl flex flex-col justify-center items-center overflow-hidden relative select-none cursor-pointer",
                     status === "error" && "opacity-50"
                 )}
                 onMouseDown={() => status === "done" && setIsComparing(true)}
@@ -107,7 +107,7 @@ export default function ProcessedImageItem({
                         src={activeUrl}
                         alt={originalFile.name}
                         className={cn(
-                            "w-[335px] h-[189px] object-cover",
+                            "w-full h-full object-cover",
                             status === "error" && "grayscale"
                         )}
                     />
@@ -115,26 +115,26 @@ export default function ProcessedImageItem({
 
                 {/* Compare Overlay Label */}
                 {status === "done" && (
-                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/50 text-white text-[10px] font-sans font-medium rounded backdrop-blur-sm pointer-events-none transition-opacity duration-200">
-                        {isComparing ? "ORIGINAL" : "PRESS TO COMPARE"}
+                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/50 text-white text-[10px] font-[var(--font-be-vietnam-pro)] font-medium rounded backdrop-blur-sm pointer-events-none transition-opacity duration-200 uppercase tracking-wider">
+                        {isComparing ? "Original" : "Press to compare"}
                     </div>
                 )}
             </div>
 
             {/* Content Container */}
-            <div className="flex-1 self-stretch flex flex-col justify-start items-start gap-4">
+            <div className="flex-1 self-stretch flex flex-col justify-between py-1">
                 {/* File Info */}
-                <div className="self-stretch flex-1 flex flex-col justify-start items-start gap-1">
+                <div className="flex flex-col gap-1.5">
                     {/* Title Row with Download Button */}
                     <div className="w-full flex items-center justify-between gap-2">
-                        <div className="text-neutral-950 text-sm font-sans font-medium leading-relaxed break-words flex items-center gap-2">
+                        <div className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] font-medium leading-relaxed break-all flex items-center gap-2">
                             {originalFile.name}
 
                             {/* Resolution Warning Badge */}
                             {hasResolutionWarning && status === "done" && (
-                                <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full font-normal border border-yellow-200" title="Image was upscaled to meet YouTube minimum 1280x720">
-                                    <AlertCircle className="w-3 h-3" />
-                                    <span className="text-[10px]">Upscaled</span>
+                                <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] rounded-full font-normal border border-yellow-200" title="Image was upscaled to meet YouTube minimum 1280x720">
+                                    <WarningCircle size={12} weight="fill" />
+                                    <span>Upscaled</span>
                                 </span>
                             )}
                         </div>
@@ -146,14 +146,12 @@ export default function ProcessedImageItem({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-auto px-2.5 py-1.5 hover:bg-neutral-100 rounded-lg flex items-center gap-2 cursor-pointer transition-colors"
+                                        className="h-auto px-0 hover:bg-transparent flex items-center gap-2 cursor-pointer transition-colors"
                                     >
-                                        <div className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                                        <div className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
                                             download
                                         </div>
-                                        <div className="w-5 h-5 relative">
-                                            <div className="w-[17.5px] h-[15.63px] absolute left-[1.25px] top-[1.25px] bg-ink-1000" />
-                                        </div>
+                                        <Download size={20} weight="regular" className="text-neutral-950" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent
@@ -183,13 +181,14 @@ export default function ProcessedImageItem({
                                             transition-colors
                                         "
                                         >
-                                            <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                            <span className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] leading-relaxed">
                                                 png
                                             </span>
 
                                             <FileImage
-                                                className="w-5 h-5 text-ink-1000"
-                                                strokeWidth={1.5}
+                                                size={20}
+                                                weight="regular"
+                                                className="text-neutral-950"
                                             />
                                         </button>
 
@@ -207,13 +206,14 @@ export default function ProcessedImageItem({
                                             transition-colors
                                         "
                                         >
-                                            <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                            <span className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] leading-relaxed">
                                                 jpeg
                                             </span>
 
                                             <FileText
-                                                className="w-5 h-5 text-ink-1000"
-                                                strokeWidth={1.5}
+                                                size={20}
+                                                weight="regular"
+                                                className="text-neutral-950"
                                             />
                                         </button>
                                     </div>
@@ -221,31 +221,38 @@ export default function ProcessedImageItem({
 
                             </Popover>
                         ) : status === "processing" ? (
-                            <div className="text-neutral-600 text-sm font-sans font-light">Processing...</div>
+                            <div className="text-neutral-400 text-sm font-[var(--font-be-vietnam-pro)] font-normal">Processing...</div>
                         ) : null}
                     </div>
 
                     {/* Compression Stats and File Size Row */}
                     {status === "done" && stats ? (
-                        <div className="w-full">
-                            <span className="text-ink-800 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">
+                        <div className="flex items-center gap-3">
+                            <span className="text-neutral-400 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
                                 {stats.percent.toLowerCase()}
                             </span>
-                            <span className="text-ink-500 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed"> | </span>
-                            <span className="text-ink-800 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">
-                                file size {stats.compStr.toLowerCase()}
+                            <div className="w-px h-3 bg-neutral-200" />
+                            <span className="text-neutral-400 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                                file size {formatBytes(processedBlob?.size || 0).toLowerCase()}
                             </span>
                         </div>
                     ) : status === "error" ? (
-                        <div className="w-full">
-                            <span className="text-[#B81616] text-sm font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">error</span>
-                            <span className="mx-4 text-ink-500 text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">|</span>
-                            <span className="text-[#B81616] text-sm font-[var(--font-be-vietnam-pro)] font-light leading-relaxed">{errorMsg}</span>
+                        <div className="flex items-center gap-3">
+                            <span className="text-[#C03535] text-[15px] font-[var(--font-be-vietnam-pro)] font-medium leading-relaxed">error</span>
+                            <div className="w-px h-3 bg-neutral-200" />
+                            <span className="text-[#C03535] text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed opacity-80">{errorMsg}</span>
                         </div>
                     ) : (
-                        <div className="text-neutral-600 text-sm font-sans font-light">Optimizing...</div>
+                        <div className="text-neutral-400 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal italic">Optimizing...</div>
                     )}
                 </div>
+
+                {/* Status indicator for active processing (if needed) */}
+                {status === "processing" && (
+                    <div className="w-full h-1 bg-neutral-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-neutral-950 animate-shimmer w-1/3" />
+                    </div>
+                )}
             </div>
         </Card>
     );

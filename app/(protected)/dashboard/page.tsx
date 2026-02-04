@@ -1,47 +1,96 @@
 import Link from "next/link";
 import { toolsConfig } from "@/config";
+import { cn } from "@/libs/utils";
+import { FileSearch, MessageSquare, Image, QrCode, Sparkles, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
+
+// Icon mapping for tools
+const toolIcons = {
+  metadata: FileSearch,
+  comments: MessageSquare,
+  thumbnail: Image,
+  qr: QrCode,
+  "script-writer": Sparkles,
+};
+
+// Tool descriptions
+const toolDescriptions = {
+  metadata: "Inspect video tags and hidden metadata.",
+  comments: "Explore and export video comments.",
+  thumbnail: "Resize and compress thumbnails to YouTube standards.",
+  qr: "Generate custom branded QR codes for your content.",
+  "script-writer": "AI-powered script writing assistant.",
+};
 
 export default async function Dashboard() {
   return (
     <main className="space-y-8">
+      {/* Welcome Header */}
+      <div className="mb-8">
+        <p className="text-neutral-600 font-[var(--font-be-vietnam-pro)]">
+          Choose a tool to get started with your YouTube content
+        </p>
+      </div>
 
+      {/* Tools Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {toolsConfig.map((tool) => (
-          <Link
-            key={tool.id}
-            href={tool.status === "active" ? tool.href : "#"}
-            className={`card bg-base-100 shadow-xl border border-base-200 hover:border-primary transition-all duration-200 ${tool.status !== "active" ? "opacity-60 cursor-not-allowed" : "hover:shadow-2xl"
-              }`}
-          >
-            <div className="card-body">
-              <div className="flex justify-between items-start">
-                <h2 className="card-title">{tool.name}</h2>
-                {tool.status !== "active" && (
-                  <div className="badge badge-ghost">Coming Soon</div>
+        {toolsConfig.map((tool) => {
+          const Icon = toolIcons[tool.id as keyof typeof toolIcons];
+          const description = toolDescriptions[tool.id as keyof typeof toolDescriptions];
+          const isActive = tool.status === "active";
+
+          return (
+            <Link
+              key={tool.id}
+              href={isActive ? tool.href : "#"}
+              className={cn(
+                "group relative bg-white rounded-2xl border transition-all duration-300",
+                "p-6 flex flex-col gap-4",
+                isActive
+                  ? "border-neutral-200 hover:border-neutral-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+                  : "border-dashed border-neutral-300 opacity-50 cursor-not-allowed bg-neutral-50"
+              )}
+            >
+              {/* Icon + Title + Badge */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "p-2.5 rounded-xl transition-colors",
+                      isActive
+                        ? "bg-neutral-100 text-neutral-900 group-hover:bg-neutral-900 group-hover:text-white"
+                        : "bg-neutral-200 text-neutral-400"
+                    )}
+                  >
+                    {Icon && <Icon className="w-5 h-5" strokeWidth={1.5} />}
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900 font-[var(--font-be-vietnam-pro)]">
+                    {tool.name}
+                  </h3>
+                </div>
+                {!isActive && (
+                  <span className="text-[10px] px-2 py-1 rounded-full bg-neutral-200 text-neutral-600 font-medium uppercase tracking-wider">
+                    Coming Soon
+                  </span>
                 )}
               </div>
-              <p className="text-base-content/70">
-                {tool.id === "qr" && "Generate custom branded QR codes for your content."}
-                {tool.id === "thumbnail" && "Resize and compress thumbnails to YouTube standards."}
-                {tool.id === "metadata" && "Inspect video tags and hidden metadata."}
-                {tool.id === "comments" && "Explore and export video comments."}
-                {tool.id === "script-writer" && "AI-powered script writing assistant."}
+
+              {/* Description */}
+              <p className="text-sm text-neutral-600 leading-relaxed font-[var(--font-be-vietnam-pro)]">
+                {description}
               </p>
-              {tool.status === "active" && (
-                <div className="card-actions justify-end mt-4">
-                  <span className="text-primary font-medium flex items-center gap-1">
-                    Open Tool
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                      <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.79a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
-                    </svg>
-                  </span>
+
+              {/* CTA for active tools */}
+              {isActive && (
+                <div className="flex items-center gap-1.5 text-sm font-medium text-neutral-900 group-hover:gap-2 transition-all mt-auto">
+                  <span>Open Tool</span>
+                  <ArrowRight className="w-4 h-4" strokeWidth={2} />
                 </div>
               )}
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </main>
   );
