@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { useMemo } from "react";
 import { helpContent } from "@/config/help-content";
 import {
     Dialog,
@@ -20,32 +20,40 @@ interface HelpModalProps {
 export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
     const content = helpContent[toolId];
 
+    // Helper to extract tool name properly if needed, although helpContent key is good enough
+    // But for the title "extract comments" style, let's trust the config for now.
+
     if (!content) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-card rounded-xl border-b border-ink-200 w-full max-w-[528px]">
-                {/* Header with Title and Close Button */}
-                <DialogHeader className="px-6 py-4 border-b border-ink-200">
-                    <DialogTitle className="text-foreground text-[20px] font-serif font-normal leading-[28px]">
+            {/* 
+              p-0 to remove default padding
+              gap-0 to remove default gap
+              max-w-[580px] to give enough room for 480px video + padding
+            */}
+            <DialogContent className="bg-card p-0 gap-0 w-full max-w-[580px] rounded-xl border border-border sm:rounded-xl">
+                {/* Header with Title */}
+                <DialogHeader className="px-6 py-4 border-b border-border text-left">
+                    <DialogTitle className="text-foreground text-[20px] font-serif font-normal leading-[140%] text-left">
                         {content.title}
                     </DialogTitle>
                 </DialogHeader>
 
                 {/* Content Section */}
-                <div className="p-8 flex flex-col justify-center items-center gap-8">
+                <div className="p-6 flex flex-col justify-center items-center gap-6">
                     {/* Text Content */}
-                    <div className="self-stretch flex flex-col justify-start items-start gap-4">
-                        <h3 className="self-stretch text-foreground p-medium">
+                    <div className="self-stretch flex flex-col justify-start items-start gap-3">
+                        <h3 className="self-stretch text-foreground text-[16px] font-medium leading-[24px]">
                             how does it work?
                         </h3>
-                        <p className="body self-stretch text-ink-800">
+                        <p className="w-full text-[14px] leading-[20px] text-muted-foreground">
                             {content.description}
                         </p>
                     </div>
 
                     {/* Video Embed Area */}
-                    <div className="w-[480px] h-[270px] bg-ink-200 rounded-[10px] border border-ink-300 flex items-center justify-center overflow-hidden">
+                    <div className="w-[480px] h-[270px] bg-muted/50 rounded-lg border border-border flex items-center justify-center overflow-hidden relative">
                         {content.videoUrl ? (
                             <iframe
                                 src={content.videoUrl}
@@ -55,19 +63,21 @@ export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
                                 title={`${content.title} tutorial video`}
                             />
                         ) : (
-                            <span className="body text-ink-700">
-                                Video tutorial coming soon
-                            </span>
+                            <div className="flex flex-col items-center justify-center gap-2 text-center p-4">
+                                <span className="text-[14px] text-muted-foreground font-medium">
+                                    Video tutorial coming soon
+                                </span>
+                            </div>
                         )}
                     </div>
                 </div>
 
                 {/* Footer with Button */}
-                <DialogFooter className="px-6 py-4 border-t border-ink-200">
+                <DialogFooter className="px-6 py-4 border-t border-border flex sm:justify-end">
                     <Button
-                        variant="default"
+                        variant="default" // Typically black/primary in this design system
                         onClick={onClose}
-                        className="normal-case"
+                        className="rounded-full px-6 bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                         Got it
                     </Button>

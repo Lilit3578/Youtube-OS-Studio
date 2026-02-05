@@ -113,7 +113,7 @@ export default function ImageCompressor() {
     const completedCount = items.filter(i => i.status === "done").length;
 
     return (
-        <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+        <div className="flex flex-col gap-6 w-full">
 
             {/* Upload Zone */}
             <Card

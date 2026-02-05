@@ -44,7 +44,7 @@ const AppHeader = () => {
                     <Button
                         variant="ghost"
                         onClick={() => setIsHelpOpen(true)}
-                        className="gap-2"
+                        className="gap-2 cursor-pointer"
                     >
                         <HelpCircle className="h-4 w-4" />
                         <span className="body">help</span>

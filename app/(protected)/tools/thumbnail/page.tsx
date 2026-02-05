@@ -8,9 +8,5 @@ export const metadata = getSEOTags({
 });
 
 export default function ThumbnailPage() {
-    return (
-        <div className="space-y-6">
-            <ImageCompressor />
-        </div>
-    );
+    return <ImageCompressor />;
 }

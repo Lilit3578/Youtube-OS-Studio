@@ -170,7 +170,7 @@ export default function CommentExplorerPage() {
     // In `handleFetch`: `question: resTypes.counts.questions` (Correct)
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="w-full">
             <UrlInputSection
                 url={url}
                 onChange={(e) => setUrl(e.target.value)}
