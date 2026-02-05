@@ -213,14 +213,15 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
                             type="button"
                             variant="ghost"
                             onClick={onClose}
-                            className="px-4 py-2 p-medium"
+                            className="normal-case"
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
+                            variant="default"
                             disabled={loading}
-                            className="px-4 py-2 p-medium"
+                            className="normal-case"
                         >
                             {loading ? "Submitting..." : "Submit Request"}
                         </Button>

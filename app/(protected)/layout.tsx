@@ -2,9 +2,9 @@ import React, { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/libs/next-auth";
 import config from "@/config";
-import Sidebar from "@/components/layout/Sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import AppHeader from "@/components/layout/AppHeader";
-import { SidebarProvider } from "@/contexts/SidebarContext";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 // This is a Server Component
 export default async function Layout({ children }: { children: React.ReactNode }) {
@@ -16,15 +16,13 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
     return (
         <SidebarProvider>
-            <div className="flex h-screen bg-base-100 font-sans">
-                <Sidebar />
-                <div className="flex-1 flex flex-col h-full overflow-hidden">
-                    <AppHeader />
-                    <main className="flex-1 overflow-y-auto p-8">
-                        {children}
-                    </main>
-                </div>
-            </div>
+            <AppSidebar />
+            <SidebarInset>
+                <AppHeader />
+                <main className="flex-1 overflow-y-auto p-8">
+                    {children}
+                </main>
+            </SidebarInset>
         </SidebarProvider>
     );
 }

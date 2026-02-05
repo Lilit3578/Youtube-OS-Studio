@@ -27,8 +27,8 @@ export default function CommentsHeader({ onDownloadConfig, hasComments }: Commen
                 {hasComments && (
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button className="bg-foreground hover:bg-ink-900 text-background rounded-md px-6 py-2 h-auto caption transition-colors cursor-pointer">
-                                DOWNLOAD
+                            <Button variant="default" className="normal-case">
+                                download
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent

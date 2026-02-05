@@ -65,12 +65,11 @@ export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
                 {/* Footer with Button */}
                 <DialogFooter className="px-6 py-4 border-t border-ink-200">
                     <Button
+                        variant="default"
                         onClick={onClose}
-                        className="h-10 px-6 py-3 bg-foreground rounded-full hover:bg-ink-900"
+                        className="normal-case"
                     >
-                        <span className="text-background caption">
-                            Got it
-                        </span>
+                        Got it
                     </Button>
                 </DialogFooter>
             </DialogContent>
