@@ -4,6 +4,9 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { toolsConfig } from "@/config";
 import HelpModal from "@/components/modals/HelpModal";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { HelpCircle } from "lucide-react";
 
 const AppHeader = () => {
     const pathname = usePathname();
@@ -29,27 +32,24 @@ const AppHeader = () => {
 
     return (
         <>
-            <header className="w-full flex items-center px-[20px] py-[2px] justify-between bg-transparent min-h-[4rem] px-8 pt-6 pb-2">
-                <div className="font-serif text-[20px] italic font-normal leading-[28px] text-[#141414]">
+            <div className="w-full flex items-center justify-between bg-transparent min-h-[4rem] px-8 pt-6 pb-2">
+                <div className="h2 text-foreground italic">
                     {getPageTitle()}
                 </div>
 
                 {showHelpButton && (
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={() => setIsHelpOpen(true)}
-                        className="flex items-center gap-2 px-[10px] py-[6px] rounded-[8px] hover:bg-neutral-100 transition-colors group cursor-pointer"
+                        className="flex items-center gap-2 px-[10px] py-[6px] rounded-[8px]"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#141414]">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                            <path d="M12 17h.01" />
-                        </svg>
-                        <span className="font-sans text-[14px] font-normal leading-[23.8px] text-[#141414]">
+                        <HelpCircle className="h-4 w-4" />
+                        <span className="body text-foreground">
                             help
                         </span>
-                    </button>
+                    </Button>
                 )}
-            </header>
+            </div>
 
             {toolId && (
                 <HelpModal
@@ -58,6 +58,8 @@ const AppHeader = () => {
                     toolId={toolId}
                 />
             )}
+
+            <Separator className="my-3 opacity-30" />
         </>
     );
 };

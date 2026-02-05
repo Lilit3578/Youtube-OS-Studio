@@ -127,7 +127,7 @@ export default function ProcessedImageItem({
                 <div className="flex flex-col gap-1.5">
                     {/* Title Row with Download Button */}
                     <div className="w-full flex items-center justify-between gap-2">
-                        <div className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] font-medium leading-relaxed break-all flex items-center gap-2">
+                        <div className="body font-medium text-neutral-950 leading-relaxed break-all flex items-center gap-2">
                             {originalFile.name}
 
                             {/* Resolution Warning Badge */}
@@ -148,7 +148,7 @@ export default function ProcessedImageItem({
                                         size="sm"
                                         className="h-auto px-0 hover:bg-transparent flex items-center gap-2 cursor-pointer transition-colors"
                                     >
-                                        <div className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                                        <div className="body text-neutral-950 leading-relaxed">
                                             download
                                         </div>
                                         <Download size={20} weight="regular" className="text-neutral-950" />
@@ -168,20 +168,12 @@ export default function ProcessedImageItem({
                                 >
                                     <div className="flex flex-col gap-1">
                                         {/* PNG */}
-                                        <button
-                                            type="button"
+                                        <Button
+                                            variant="ghost"
                                             onClick={() => handleDownload("png")}
-                                            className="
-                                            flex items-center justify-between
-                                            w-full
-                                            px-2.5 py-1.5
-                                            rounded-lg
-                                            text-left
-                                            hover:bg-black/5
-                                            transition-colors
-                                        "
+                                            className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
                                         >
-                                            <span className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] leading-relaxed">
+                                            <span className="body text-neutral-950 leading-relaxed">
                                                 png
                                             </span>
 
@@ -190,23 +182,15 @@ export default function ProcessedImageItem({
                                                 weight="regular"
                                                 className="text-neutral-950"
                                             />
-                                        </button>
+                                        </Button>
 
                                         {/* JPEG */}
-                                        <button
-                                            type="button"
+                                        <Button
+                                            variant="ghost"
                                             onClick={() => handleDownload("jpg")}
-                                            className="
-                                            flex items-center justify-between
-                                            w-full
-                                            px-2.5 py-1.5
-                                            rounded-lg
-                                            text-left
-                                            hover:bg-black/5
-                                            transition-colors
-                                        "
+                                            className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
                                         >
-                                            <span className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] leading-relaxed">
+                                            <span className="body text-neutral-950 leading-relaxed">
                                                 jpeg
                                             </span>
 
@@ -215,35 +199,35 @@ export default function ProcessedImageItem({
                                                 weight="regular"
                                                 className="text-neutral-950"
                                             />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </PopoverContent>
 
                             </Popover>
                         ) : status === "processing" ? (
-                            <div className="text-neutral-400 text-sm font-[var(--font-be-vietnam-pro)] font-normal">Processing...</div>
+                            <div className="body text-neutral-400">Processing...</div>
                         ) : null}
                     </div>
 
                     {/* Compression Stats and File Size Row */}
                     {status === "done" && stats ? (
                         <div className="flex items-center gap-3">
-                            <span className="text-neutral-400 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                            <span className="body text-neutral-400 leading-relaxed">
                                 {stats.percent.toLowerCase()}
                             </span>
                             <div className="w-px h-3 bg-neutral-200" />
-                            <span className="text-neutral-400 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                            <span className="body text-neutral-400 leading-relaxed">
                                 file size {formatBytes(processedBlob?.size || 0).toLowerCase()}
                             </span>
                         </div>
                     ) : status === "error" ? (
                         <div className="flex items-center gap-3">
-                            <span className="text-[#C03535] text-[15px] font-[var(--font-be-vietnam-pro)] font-medium leading-relaxed">error</span>
+                            <span className="body font-medium text-[#C03535] leading-relaxed">error</span>
                             <div className="w-px h-3 bg-neutral-200" />
-                            <span className="text-[#C03535] text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed opacity-80">{errorMsg}</span>
+                            <span className="body text-[#C03535] leading-relaxed opacity-80">{errorMsg}</span>
                         </div>
                     ) : (
-                        <div className="text-neutral-400 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal italic">Optimizing...</div>
+                        <div className="body text-neutral-400 italic">Optimizing...</div>
                     )}
                 </div>
 

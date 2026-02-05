@@ -13,15 +13,15 @@ export default async function Page() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-base-100 p-8 text-center gap-8">
       <div>
-        <h1 className="text-4xl font-extrabold mb-4">{config.appName}</h1>
-        <p className="text-lg opacity-80 max-w-md mx-auto">{config.appDescription}</p>
+        <h1 className="text-[56px] leading-[56px] font-serif font-normal mb-4">{config.appName}</h1>
+        <p className="body opacity-80 max-w-md mx-auto">{config.appDescription}</p>
       </div>
 
-      <div className="card w-full max-w-sm shadow-2xl bg-base-100 border border-base-200">
+      <div className="card w-full max-w-sm shadow-2xl bg-card border border-border">
         <div className="card-body gap-4">
-          <h2 className="card-title justify-center text-center">Welcome Back</h2>
+          <h2 className="card-title justify-center text-center text-[20px] leading-[28px] font-serif">Welcome Back</h2>
           <ButtonSignin text="Login with Google" extraStyle="btn-primary w-full" />
-          <p className="text-xs text-center opacity-60">
+          <p className="caption text-center opacity-60">
             By logging in, you agree to our Terms of Service.
           </p>
         </div>

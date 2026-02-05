@@ -118,23 +118,23 @@ export default function ImageCompressor() {
             {/* Upload Zone */}
             <Card
                 className={cn(
-                    "w-full h-[200px] bg-neutral-50/50 border border-dotted border-neutral-300 rounded-xl flex flex-col justify-center items-center gap-4 transition-colors duration-200 cursor-pointer hover:bg-neutral-100",
-                    isDragging ? "border-primary bg-neutral-100" : ""
+                    "w-full h-[200px] bg-ink-100 border border-dotted border-ink-400 rounded-xl flex flex-col justify-center items-center gap-4 transition-colors duration-200 cursor-pointer hover:bg-ink-200",
+                    isDragging ? "border-primary bg-ink-200" : ""
                 )}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => document.getElementById("thumbnail-upload-input")?.click()}
             >
-                <div className="p-2.5 bg-neutral-100 rounded-lg">
-                    <FileImage size={24} weight="regular" className="text-neutral-950" />
+                <div className="p-2.5 bg-ink-200 rounded-lg">
+                    <FileImage size={24} weight="regular" className="text-foreground" />
                 </div>
 
                 <div className="flex flex-col items-center justify-start gap-1">
-                    <div className="text-center text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                    <div className="body text-center text-foreground leading-relaxed">
                         upload / drag images (png, jpeg)
                     </div>
-                    <div className="text-center text-neutral-400 text-sm font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed">
+                    <div className="body text-center text-muted-foreground leading-relaxed">
                         max {formatBytes(THUMBNAIL_CONFIG.UPLOAD_MAX_SIZE_BYTES)} size
                     </div>
                 </div>
@@ -150,12 +150,12 @@ export default function ImageCompressor() {
             </Card>
 
             {/* Status Separator */}
-            {items.length > 0 && <Separator className="bg-neutral-200/50" />}
+            {items.length > 0 && <Separator className="bg-border opacity-50" />}
 
             {/* Results Section */}
             {items.length > 0 && (
                 <div className="w-full flex justify-between items-center mt-4">
-                    <div className="text-center text-neutral-950 text-xl font-[var(--font-instrument-serif)] italic font-normal leading-7 break-words">
+                    <div className="text-center text-foreground text-[20px] font-serif font-normal leading-[28px] break-words">
                         results ({items.length})
                     </div>
                     <Popover>
@@ -165,10 +165,10 @@ export default function ImageCompressor() {
                                 size="sm"
                                 className="h-auto px-0 hover:bg-transparent rounded-lg flex items-center gap-2 cursor-pointer transition-colors"
                             >
-                                <div className="text-center text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] font-normal leading-relaxed break-words">
+                                <div className="body text-center text-foreground leading-relaxed break-words">
                                     download all
                                 </div>
-                                <Download size={20} weight="regular" className="text-neutral-950" />
+                                <Download size={20} weight="regular" className="text-foreground" />
                             </Button>
 
                         </PopoverTrigger>
@@ -178,54 +178,38 @@ export default function ImageCompressor() {
                             className="
                                 w-[180px]
                                 p-2
-                                bg-white
+                                bg-popover
                                 rounded-xl
                                 shadow-lg
-                                border border-black/5
+                                border border-ink-200
                             "
                         >
                             <div className="flex flex-col gap-1">
                                 {/* PNG */}
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="ghost"
                                     onClick={() => handleDownloadAll("png")}
-                                    className="
-                                    flex items-center justify-between
-                                    w-full
-                                    px-2.5 py-1.5
-                                    rounded-lg
-                                    text-left
-                                    hover:bg-black/5
-                                    transition-colors
-                                "
+                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto"
                                 >
-                                    <span className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] leading-relaxed">
+                                    <span className="body text-foreground leading-relaxed">
                                         png
                                     </span>
 
-                                    <FileImage size={20} weight="regular" className="text-neutral-950" />
-                                </button>
+                                    <FileImage size={20} weight="regular" className="text-foreground" />
+                                </Button>
 
                                 {/* JPEG */}
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="ghost"
                                     onClick={() => handleDownloadAll("jpg")}
-                                    className="
-                                    flex items-center justify-between
-                                    w-full
-                                    px-2.5 py-1.5
-                                    rounded-lg
-                                    text-left
-                                    hover:bg-black/5
-                                    transition-colors
-                                "
+                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
                                 >
-                                    <span className="text-neutral-950 text-[15px] font-[var(--font-be-vietnam-pro)] leading-relaxed">
+                                    <span className="body text-neutral-950 leading-relaxed">
                                         jpeg
                                     </span>
 
                                     <FileText size={20} weight="regular" className="text-neutral-950" />
-                                </button>
+                                </Button>
                             </div>
                         </PopoverContent>
 
@@ -234,13 +218,13 @@ export default function ImageCompressor() {
                 </div>
             )}
 
-            <div className="w-full h-px bg-neutral-200" />
+            <div className="w-full h-px bg-border" />
 
             {/* Processed Images List (Inlined) */}
             <div className="w-full flex flex-col gap-8">
                 {items.map((item, index) => (
                     <React.Fragment key={item.id}>
-                        {index > 0 && <div className="w-full h-px bg-neutral-200" />}
+                        {index > 0 && <div className="w-full h-px bg-border" />}
                         <ProcessedImageItem
                             originalFile={item.file}
                             processedBlob={item.blob}

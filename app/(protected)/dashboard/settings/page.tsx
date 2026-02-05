@@ -11,22 +11,22 @@ export default async function SettingsPage() {
 
     return (
         <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold text-base-content mb-8">Settings</h1>
+            <h1 className="text-[40px] leading-[44px] font-serif font-normal text-foreground mb-8">Settings</h1>
 
             {/* Account Section */}
-            <section className="mb-8 bg-white rounded-lg border border-neutral-200 p-6">
-                <h2 className="text-lg font-semibold text-base-content mb-4">Account</h2>
+            <section className="mb-8 bg-card rounded-lg border border-border p-6">
+                <h2 className="text-[20px] leading-[28px] font-serif font-normal text-foreground mb-4">Account</h2>
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
+                        <label className="block p-medium text-foreground mb-1">Name</label>
                         <input
                             type="text"
                             value={session.user?.name || ""}
                             disabled
-                            className="w-full px-3 py-2 border border-neutral-200 rounded-md bg-neutral-50 text-neutral-500 cursor-not-allowed"
+                            className="body w-full px-3 py-2 border border-input rounded-md bg-accent text-muted-foreground cursor-not-allowed"
                         />
-                        <p className="text-xs text-neutral-500 mt-1">Your name from Google account</p>
+                        <p className="caption text-muted-foreground mt-1">Your name from Google account</p>
                     </div>
 
                     <div>
@@ -41,7 +41,7 @@ export default async function SettingsPage() {
                     </div>
 
                     <div className="pt-4 border-t border-neutral-200">
-                        <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+                        <button className="p-medium text-destructive hover:text-destructive/90">
                             Delete Account
                         </button>
                         <p className="text-xs text-neutral-500 mt-1">Permanently delete your account and all data</p>
@@ -66,7 +66,7 @@ export default async function SettingsPage() {
                         </p>
                     </div>
 
-                    <button className="px-4 py-2 bg-neutral-900 text-white rounded-md hover:bg-neutral-800 transition-colors text-sm font-medium">
+                    <button className="px-4 py-2 bg-foreground text-background rounded-md hover:bg-ink-900 transition-colors p-medium">
                         Save API Key
                     </button>
                 </div>

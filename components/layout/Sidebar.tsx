@@ -15,61 +15,13 @@ import {
     Settings,
     Sparkles
 } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-import React, { useState, useEffect, ReactNode, useRef } from "react";
+import React, { useState, useRef, ReactNode } from "react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import UserPopover from "@/components/UserPopover";
 import RequestToolModal from "@/components/modals/RequestToolModal";
-
-// --- Minimal Shadcn-like Components ---
-
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
-
-function Button({
-    className,
-    variant = "default",
-    size = "default",
-    children,
-    ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: "default" | "ghost" | "secondary";
-    size?: "default" | "sm" | "icon";
-}) {
-    const variants = {
-        default: "bg-slate-900 text-white hover:bg-slate-800 shadow",
-        ghost: "hover:bg-slate-100 hover:text-slate-900",
-        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200",
-    };
-
-    const sizes = {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        icon: "h-9 w-9",
-    };
-
-    return (
-        <button
-            className={cn(
-                "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50",
-                variants[variant],
-                sizes[size],
-                className
-            )}
-            {...props}
-        >
-            {children}
-        </button>
-    );
-}
-
-function Separator({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-    return (
-        <div className={cn("shrink-0 bg-slate-200 h-[1px] w-full", className)} {...props} />
-    );
-}
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/libs/utils";
 
 // --- Sidebar Specific Components ---
 
@@ -88,32 +40,33 @@ function SidebarItem({
 }) {
     const { isCollapsed } = useSidebar();
 
-    if (disabled) {
-        return (
-            <div className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-neutral-400 cursor-not-allowed",
-                isCollapsed && "justify-center px-2"
-            )}>
-                {icon}
-                {!isCollapsed && <span>{label}</span>}
-            </div>
-        );
-    }
-
-    const content = (
-        <div
+    const buttonContent = (
+        <Button
+            variant="ghost"
+            disabled={disabled}
             className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors hover:bg-neutral-100 hover:text-neutral-900",
-                active && "bg-neutral-100 text-neutral-900",
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 body-strong w-full justify-start",
+                active && "bg-accent text-accent-foreground",
+                disabled && "text-neutral-400 cursor-not-allowed",
                 isCollapsed && "justify-center px-2"
             )}
+            asChild={!!href && !disabled}
         >
-            {icon}
-            {!isCollapsed && <span>{label}</span>}
-        </div>
+            {href && !disabled ? (
+                <Link href={href}>
+                    {icon}
+                    {!isCollapsed && <span>{label}</span>}
+                </Link>
+            ) : (
+                <>
+                    {icon}
+                    {!isCollapsed && <span>{label}</span>}
+                </>
+            )}
+        </Button>
     );
 
-    return href ? <Link href={href}>{content}</Link> : content;
+    return buttonContent;
 }
 
 function SectionLabel({ children }: { children: ReactNode }) {
@@ -122,7 +75,7 @@ function SectionLabel({ children }: { children: ReactNode }) {
     if (isCollapsed) return null;
 
     return (
-        <div className="px-3 py-2 text-xs font-medium text-neutral-400 tracking-wide">
+        <div className="px-3 py-2 label text-muted-foreground">
             {children}
         </div>
     );
@@ -156,18 +109,18 @@ const Sidebar = () => {
 
     return (
         <aside className={cn(
-            "hidden lg:flex flex-col h-full bg-base-100 p-4 border-r border-neutral-200 transition-all duration-300",
+            "hidden lg:flex flex-col h-full bg-background p-4 border-r border-border transition-all duration-300",
             isCollapsed ? "w-20" : "w-72"
         )}>
             {/* Header */}
             <div className={cn(
-                "flex items-center px-2 mb-2",
+                "flex items-center mb-2 px-4",
                 isCollapsed ? "justify-center" : "justify-between"
             )}>
                 {!isCollapsed && (
-                    <div className="text-xl leading-none">
-                        <span className="font-serif italic text-base-content">youtube</span>{" "}
-                        <span className="font-serif text-base-content">OS</span>
+                    <div className="h2 text-foreground italic">
+                        <span>youtube</span>{" "}
+                        <span>OS</span>
                     </div>
                 )}
 
@@ -179,7 +132,7 @@ const Sidebar = () => {
                 </Button>
             </div>
 
-            <Separator className="my-3 opacity-10 bg-base-content" />
+            <Separator className="my-3 opacity-30" />
 
             {/* Navigation */}
             <nav className="flex flex-col gap-1 flex-1 overflow-y-auto no-scrollbar">
@@ -209,19 +162,19 @@ const Sidebar = () => {
                 <SidebarItem label="lorem ipsum" icon={<Sparkles className="h-4 w-4" />} disabled />
             </nav>
 
-            <Separator className="my-3 opacity-10 bg-base-content" />
+            <Separator className="my-3 opacity-10" />
 
             {/* CTA */}
             {!isCollapsed && (
                 <Button
                     onClick={() => setRequestToolModalOpen(true)}
-                    className="mb-3 w-full rounded-full text-xs uppercase bg-neutral text-neutral-content hover:bg-neutral/90 cursor-pointer"
+                    className="mb-3 w-full rounded-full label bg-neutral text-neutral-content hover:bg-neutral/90 cursor-pointer"
                 >
                     request tool
                 </Button>
             )}
 
-            <Separator className="my-3 opacity-10 bg-base-content" />
+            <Separator className="my-3 opacity-10" />
 
             {/* Footer */}
             <div className="flex flex-col gap-1 relative">

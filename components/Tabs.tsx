@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { JSX } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Tab {
 	id: string;
@@ -148,39 +149,30 @@ const tabs: Tab[] = [
 	},
 ];
 
-const Tabs = () => {
-	const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
-
+const TabsComponent = () => {
 	return (
 		<section className="max-w-lg mx-auto space-y-4">
-			{/* TAB HEADER */}
-			<div
-				className="grid rounded-xl bg-base-200 p-1"
-				style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}
-			>
+			<Tabs defaultValue={tabs[0].id} className="w-full">
+				<TabsList className="grid w-full rounded-xl bg-base-200 p-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+					{tabs.map((tab) => (
+						<TabsTrigger
+							key={tab.id}
+							value={tab.id}
+							className="flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium data-[state=active]:bg-base-100 data-[state=active]:shadow data-[state=inactive]:text-base-content/75"
+						>
+							{tab.icon}
+							{tab.title}
+						</TabsTrigger>
+					))}
+				</TabsList>
 				{tabs.map((tab) => (
-					<a
-						key={tab.id}
-						role="tab"
-						className={`flex cursor-pointer select-none items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium ${
-							activeTab === tab.id
-								? "animate-opacity bg-base-100 shadow"
-								: "text-base-content/75"
-						}`}
-						onClick={() => setActiveTab(tab.id)}
-					>
-						{tab.icon}
-						{tab.title}
-					</a>
+					<TabsContent key={tab.id} value={tab.id} className="animate-opacity">
+						{tab.content}
+					</TabsContent>
 				))}
-			</div>
-
-			{/* TAB CONTENT */}
-			<div className="animate-opacity" key={activeTab}>
-				{tabs.find((tab) => tab.id === activeTab)?.content}
-			</div>
+			</Tabs>
 		</section>
 	);
 };
 
-export default Tabs;
+export default TabsComponent;

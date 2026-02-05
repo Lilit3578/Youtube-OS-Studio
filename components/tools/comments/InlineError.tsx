@@ -18,7 +18,7 @@ export default function InlineError({ message, className }: InlineErrorProps) {
             className
         )}>
             <AlertCircle className="w-5 h-5 shrink-0" />
-            <p className="text-sm font-[var(--font-be-vietnam-pro)] font-medium leading-relaxed">
+            <p className="body font-medium leading-relaxed">
                 {message}
             </p>
         </div>

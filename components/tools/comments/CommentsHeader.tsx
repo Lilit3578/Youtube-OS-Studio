@@ -20,52 +20,52 @@ export default function CommentsHeader({ onDownloadConfig, hasComments }: Commen
     return (
         <div className="grid items-center mt-8 mb-4 gap-4">
             <div className="flex items-center items-center justify-between">
-                <h2 className="text-2xl font-[var(--font-instrument-serif)] italic text-neutral-900">
+                <h2 className="text-[32px] leading-[36px] font-serif font-normal text-foreground">
                     comments
                 </h2>
 
                 {hasComments && (
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button className="bg-neutral-900 hover:bg-neutral-800 text-white rounded-md px-6 py-2 h-auto text-sm font-medium transition-colors cursor-pointer">
+                            <Button className="bg-foreground hover:bg-ink-900 text-background rounded-md px-6 py-2 h-auto caption transition-colors cursor-pointer">
                                 DOWNLOAD
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent
                             align="end"
                             sideOffset={6}
-                            className="w-[180px] p-2 bg-white rounded-xl shadow-lg border border-black/5"
+                            className="w-[180px] p-2 bg-popover rounded-xl shadow-lg border border-ink-200"
                         >
                             <div className="flex flex-col gap-1">
                                 {/* CSV */}
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="ghost"
                                     onClick={() => onDownloadConfig("csv")}
-                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-left hover:bg-black/5 transition-colors cursor-pointer"
+                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto"
                                 >
-                                    <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                    <span className="body text-foreground">
                                         csv
                                     </span>
-                                    <FileText className="w-5 h-5 text-ink-1000" strokeWidth={1.5} />
-                                </button>
+                                    <FileText className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+                                </Button>
 
                                 {/* Excel */}
-                                <button
-                                    type="button"
+                                <Button
+                                    variant="ghost"
                                     onClick={() => onDownloadConfig("excel")}
-                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-left hover:bg-black/5 transition-colors cursor-pointer"
+                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
                                 >
-                                    <span className="text-ink-1000 text-sm font-[var(--font-be-vietnam-pro)] leading-[23.8px]">
+                                    <span className="body text-ink-1000">
                                         excel
                                     </span>
                                     <FileSpreadsheet className="w-5 h-5 text-ink-1000" strokeWidth={1.5} />
-                                </button>
+                                </Button>
                             </div>
                         </PopoverContent>
                     </Popover>
                 )}
             </div>
-            <Separator className="bg-neutral-200/50" />
+            <Separator className="bg-border opacity-50" />
         </div>
     );
 }
