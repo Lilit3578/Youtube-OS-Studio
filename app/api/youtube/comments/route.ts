@@ -4,9 +4,12 @@ import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import { extractVideoId, fetchComments } from "@/libs/youtube";
 import { z } from "zod";
+import { ERROR_MESSAGES } from "@/libs/constants/messages";
 
 // Set max duration for API route to 60 seconds
 export const maxDuration = 60;
+
+const DAILY_LIMIT = 20;
 
 // Input validation schema
 const requestSchema = z.object({
@@ -17,12 +20,25 @@ const requestSchema = z.object({
         .trim()
         .refine(
             (url) => {
-                // Basic YouTube URL validation
                 return /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(url);
             },
             { message: "Invalid YouTube URL format" }
         ),
 });
+
+/** Map internal error signals to safe, user-facing error keys */
+function classifyError(error: any): { errorKey: string; status: number } {
+    if (error.response?.status === 403 || error.status === 403) {
+        return { errorKey: "QUOTA_EXCEEDED", status: 429 };
+    }
+    if (error.message?.includes("disabled")) {
+        return { errorKey: "DISABLED", status: 400 };
+    }
+    if (error.message?.includes("not found") || error.response?.status === 404) {
+        return { errorKey: "NO_PUBLIC", status: 404 };
+    }
+    return { errorKey: "GENERIC_FAIL", status: 500 };
+}
 
 export async function POST(req: Request) {
     try {
@@ -68,38 +84,50 @@ export async function POST(req: Request) {
 
         await connectMongo();
 
-        // Check usage limits
-        const user = await User.findOne({ email: session.user.email });
-
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
-
-        // Reset daily limit if it's a new day
+        // Atomic usage check and increment — prevents TOCTOU race condition.
+        // Resets counter if the last reset was before today (UTC).
         const now = new Date();
-        // Ensure usage object and lastResetDate exist (handle potential missing fields in old docs)
-        const explorerUsage = user.usage?.commentExplorer || { count: 0, lastResetDate: new Date() };
-        const lastReset = new Date(explorerUsage.lastResetDate);
+        const startOfDay = new Date(
+            Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+        );
 
-        // Check if it's a different day (UTC-based for consistency)
-        const isSameDay =
-            now.getUTCFullYear() === lastReset.getUTCFullYear() &&
-            now.getUTCMonth() === lastReset.getUTCMonth() &&
-            now.getUTCDate() === lastReset.getUTCDate();
+        // First, reset any stale counters atomically
+        await User.updateOne(
+            {
+                email: session.user.email,
+                "usage.commentExplorer.lastResetDate": { $lt: startOfDay },
+            },
+            {
+                $set: {
+                    "usage.commentExplorer.count": 0,
+                    "usage.commentExplorer.lastResetDate": now,
+                },
+            }
+        );
 
-        if (!isSameDay) {
-            // Safe access to nested properties
-            if (!user.usage) user.usage = {};
-            if (!user.usage.commentExplorer) user.usage.commentExplorer = { count: 0, lastResetDate: now };
+        // Then attempt atomic increment only if under limit
+        const result = await User.findOneAndUpdate(
+            {
+                email: session.user.email,
+                "usage.commentExplorer.count": { $lt: DAILY_LIMIT },
+            },
+            {
+                $inc: { "usage.commentExplorer.count": 1 },
+            },
+            { new: true }
+        );
 
-            user.usage.commentExplorer.count = 0;
-            user.usage.commentExplorer.lastResetDate = now;
-            await user.save();
-        }
-
-        if (user.usage.commentExplorer.count >= 20) {
+        if (!result) {
+            // Either user not found or limit reached
+            const userExists = await User.exists({ email: session.user.email });
+            if (!userExists) {
+                return NextResponse.json({ error: "User not found" }, { status: 404 });
+            }
             return NextResponse.json(
-                { error: "Daily limit of 20 requests reached.", errorKey: "QUOTA_EXCEEDED" },
+                {
+                    error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
+                    errorKey: "QUOTA_EXCEEDED",
+                },
                 { status: 429 }
             );
         }
@@ -116,10 +144,6 @@ export async function POST(req: Request) {
             other: comments.filter(c => c.intent === "other").length,
         };
 
-        // Increment usage
-        user.usage.commentExplorer.count += 1;
-        await user.save();
-
         return NextResponse.json({
             videoId,
             comments,
@@ -129,14 +153,15 @@ export async function POST(req: Request) {
     } catch (error: any) {
         console.error("Error in comment extraction API:", error);
 
-        let errorKey = "GENERIC_FAIL";
-        if (error.response?.status === 403 || error.status === 403) errorKey = "QUOTA_EXCEEDED";
-        if (error.message?.includes("disabled")) errorKey = "DISABLED";
-        if (error.message?.includes("no public")) errorKey = "NO_PUBLIC";
+        // Never leak internal error messages to the client
+        const { errorKey, status } = classifyError(error);
+        const safeMessage =
+            (ERROR_MESSAGES.TOOLS.COMMENTS as Record<string, string>)[errorKey] ||
+            ERROR_MESSAGES.TOOLS.COMMENTS.GENERIC_FAIL;
 
         return NextResponse.json(
-            { error: error.message || "Internal Server Error", errorKey },
-            { status: 500 }
+            { error: safeMessage, errorKey },
+            { status }
         );
     }
 }

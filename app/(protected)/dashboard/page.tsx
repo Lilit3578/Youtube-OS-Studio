@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { toolsConfig } from "@/config";
 import { cn } from "@/libs/utils";
-import { FileSearch, MessageSquare, Image, QrCode, Sparkles, ArrowRight } from "lucide-react";
+import { FileSearch, MessageSquare, Image, QrCode, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,6 @@ const toolIcons = {
   comments: MessageSquare,
   thumbnail: Image,
   qr: QrCode,
-  "script-writer": Sparkles,
 };
 
 // Tool descriptions
@@ -20,7 +19,6 @@ const toolDescriptions = {
   comments: "Explore and export video comments.",
   thumbnail: "Resize and compress thumbnails to YouTube standards.",
   qr: "Generate custom branded QR codes for your content.",
-  "script-writer": "AI-powered script writing assistant.",
 };
 
 export default async function Dashboard() {
@@ -39,17 +37,20 @@ export default async function Dashboard() {
           const Icon = toolIcons[tool.id as keyof typeof toolIcons];
           const description = toolDescriptions[tool.id as keyof typeof toolDescriptions];
           const isActive = tool.status === "active";
+          const hasPage = tool.href !== "#";
 
           return (
             <Link
               key={tool.id}
-              href={isActive ? tool.href : "#"}
+              href={hasPage ? tool.href : "#"}
               className={cn(
                 "group relative bg-card rounded-2xl border transition-all duration-300",
                 "p-6 flex flex-col gap-4",
                 isActive
                   ? "border-border hover:border-ink-400 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
-                  : "border-dashed border-ink-300 opacity-50 cursor-not-allowed bg-ink-100"
+                  : hasPage
+                    ? "border-dashed border-ink-300 hover:border-ink-400 hover:opacity-80 cursor-pointer bg-ink-100 opacity-60"
+                    : "border-dashed border-ink-300 opacity-50 cursor-not-allowed bg-ink-100"
               )}
             >
               {/* Icon + Title + Badge */}
@@ -81,13 +82,18 @@ export default async function Dashboard() {
                 {description}
               </p>
 
-              {/* CTA for active tools */}
-              {isActive && (
+              {/* CTA */}
+              {isActive ? (
                 <div className="flex items-center gap-1.5 text-sm font-medium text-foreground group-hover:gap-2 transition-all mt-auto">
                   <span>Open Tool</span>
                   <ArrowRight className="w-4 h-4" strokeWidth={2} />
                 </div>
-              )}
+              ) : hasPage ? (
+                <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground group-hover:gap-2 transition-all mt-auto">
+                  <span>Register Interest</span>
+                  <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                </div>
+              ) : null}
             </Link>
           );
         })}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "react-hot-toast";
 import * as XLSX from "xlsx";
 
@@ -10,15 +10,14 @@ import FilterTabs, { FilterType } from "@/components/tools/comments/FilterTabs";
 import CommentsList from "@/components/tools/comments/CommentsList";
 import InlineError from "@/components/tools/comments/InlineError";
 import { ERROR_MESSAGES } from "@/libs/constants/messages";
-import { Comment, CommentIntent, CommentResponse } from "@/types/comments";
-import { extractVideoId } from "@/libs/youtube"; // Using client-side safe export if possible, otherwise duplicate logic. 
-// Wait, libraries in `libs/` are usually shared. `axios` is in `libs/youtube.ts` so it might be Node.js only if it uses Node constructs, but `extractVideoId` is pure string manipulation.
-// Re-checking libs/youtube.ts... it imports axios. Next.js might fuss if I import 'axios' in a client component if it's not careful, but usually it's fine. 
-// However, `libs/youtube.ts` *also* has `fetchComments` which uses `process.env`. `process.env` on client is undefined for non-NEXT_PUBLIC.
-// So I should NOT import `fetchComments` here. But `extractVideoId` is pure. 
-// I'll copy `extractVideoId` logic or safe import if it was split. 
-// To be safe and clean, I will just duplicate the regex or move it to a shared utils file. 
-// For now, I'll just use a local regex to avoid importing server-side code into client bundle.
+import { Comment, CommentResponse } from "@/types/comments";
+
+/** Extract a YouTube video ID (exactly 11 chars) from various URL formats. */
+const extractVideoIdClient = (url: string): string | null => {
+    const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
+};
 
 export default function CommentExplorerPage() {
     const [url, setUrl] = useState("");
@@ -35,22 +34,21 @@ export default function CommentExplorerPage() {
         other: 0
     });
 
-    // Debounce for auto-fetch
+    // Track last-fetched video ID to prevent duplicate requests
+    const lastFetchedVideoId = useRef<string | null>(null);
+
+    // Auto-fetch only when a complete, valid 11-char video ID is detected
     useEffect(() => {
+        const videoId = extractVideoIdClient(url);
+        if (!videoId || videoId === lastFetchedVideoId.current) return;
+
         const timer = setTimeout(() => {
-            if (url && extractVideoIdClient(url)) {
-                handleFetch(url);
-            }
-        }, 800); // 800ms debounce
+            lastFetchedVideoId.current = videoId;
+            handleFetch(url);
+        }, 800);
 
         return () => clearTimeout(timer);
     }, [url]);
-
-    const extractVideoIdClient = (url: string) => {
-        const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?/\s]{11})/;
-        const match = url.match(regex);
-        return match ? match[1] : null;
-    };
 
     const handleFetch = async (inputUrl: string) => {
         // Avoid double fetching if loading

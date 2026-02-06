@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import { Resend } from "resend";
 import config from "@/config";
 import connectMongo from "./mongo";
 
@@ -44,15 +45,30 @@ export const authOptions = {
     ...(connectMongo
       ? [
         EmailProvider({
-          server: {
-            host: "smtp.resend.com",
-            port: 465,
-            auth: {
-              user: "resend",
-              pass: process.env.RESEND_API_KEY || "",
-            },
-          },
+          server: { host: "smtp.resend.com", port: 465, auth: { user: "resend", pass: process.env.RESEND_API_KEY || "" } },
           from: config.resend.fromNoReply,
+          sendVerificationRequest: async ({ identifier: email, url, provider }) => {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            await resend.emails.send({
+              from: provider.from as string,
+              to: email,
+              subject: `Sign in to ${config.appName}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 0;">
+                  <h2 style="color: #141414; font-size: 20px; margin-bottom: 16px;">Sign in to ${config.appName}</h2>
+                  <p style="color: #525252; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                    Click the button below to sign in. This link expires in 24 hours.
+                  </p>
+                  <a href="${url}" style="display: inline-block; background: #141414; color: #fefefe; padding: 12px 32px; border-radius: 999px; text-decoration: none; font-size: 14px;">
+                    Sign in
+                  </a>
+                  <p style="color: #a3a3a3; font-size: 12px; margin-top: 32px;">
+                    If you didn&apos;t request this email, you can safely ignore it.
+                  </p>
+                </div>
+              `,
+            });
+          },
         }),
       ]
       : []),
@@ -107,10 +123,11 @@ export const authOptions = {
   session: {
     strategy: "jwt" as const,
   },
+  pages: {
+    signIn: "/",
+  },
   theme: {
     brandColor: config.colors.main,
-    // Add you own logo below. Recommended size is rectangle (i.e. 200x50px) and show your logo + name.
-    // It will be used in the login flow to display your logo. If you don't add it, it will look faded.
     logo: `https://${config.domainName}/logoAndName.png`,
   },
 };

@@ -9,12 +9,6 @@ const themes = {
 
 export const toolsConfig = [
   {
-    id: "metadata",
-    name: "analyze video data",
-    href: "/tools/metadata",
-    status: "active"
-  },
-  {
     id: "comments",
     name: "extract comments",
     href: "/tools/comments",
@@ -27,17 +21,17 @@ export const toolsConfig = [
     status: "active"
   },
   {
+    id: "metadata",
+    name: "analyze video data",
+    href: "/tools/metadata",
+    status: "coming-soon"
+  },
+  {
     id: "qr",
     name: "generate qr code",
     href: "/tools/qr",
-    status: "active"
-  },
-  {
-    id: "script-writer",
-    name: "ai script writer",
-    href: "#",
     status: "coming-soon"
-  }
+  },
 ];
 
 const config = {
@@ -77,7 +71,7 @@ const config = {
   },
   auth: {
     // REQUIRED — the path to log in users. It's use to protect private routes (like /dashboard). It's used in apiClient (/libs/api.js) upon 401 errors from our API
-    loginUrl: "/api/auth/signin",
+    loginUrl: "/",
     // REQUIRED — the path you want to redirect users to after a successful login (i.e. /dashboard, /private). This is normally a private page for users to manage their accounts. It's used in apiClient (/libs/api.js) upon 401 errors from our API & in ButtonSignin.js
     callbackUrl: "/dashboard",
   },

@@ -103,24 +103,30 @@ export function AppSidebar() {
                         <SidebarGroupLabel className="px-3 pt-4 pb-1 text-muted-foreground italic h-auto group-data-[collapsible=icon]:hidden">coming soon</SidebarGroupLabel>
                         <SidebarGroupContent className="group-data-[collapsible=icon]:p-0">
                             <SidebarMenu>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton disabled>
-                                        <Sparkles />
-                                        <span>lorem ipsum</span>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton disabled>
-                                        <Sparkles />
-                                        <span>lorem ipsum</span>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton disabled>
-                                        <Sparkles />
-                                        <span>lorem ipsum</span>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
+                                {toolsConfig.filter(t => t.status === "coming-soon").map(tool => {
+                                    const hasPage = tool.href !== "#";
+                                    return (
+                                        <SidebarMenuItem key={tool.id}>
+                                            {hasPage ? (
+                                                <SidebarMenuButton
+                                                    asChild
+                                                    isActive={pathname.startsWith(tool.href)}
+                                                    className="opacity-60 hover:opacity-100"
+                                                >
+                                                    <Link href={tool.href}>
+                                                        {getToolIcon(tool.id)}
+                                                        <span>{tool.name}</span>
+                                                    </Link>
+                                                </SidebarMenuButton>
+                                            ) : (
+                                                <SidebarMenuButton disabled>
+                                                    {getToolIcon(tool.id)}
+                                                    <span>{tool.name}</span>
+                                                </SidebarMenuButton>
+                                            )}
+                                        </SidebarMenuItem>
+                                    );
+                                })}
                             </SidebarMenu>
                         </SidebarGroupContent>
                     </SidebarGroup>

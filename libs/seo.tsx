@@ -75,6 +75,9 @@ export const getSEOTags = ({
 // I recommend adding the one below to your /page.js for software apps: It tells Google that your AppName is a SoftwareApplication, and it has a rating of 4.8/5 from 12 reviews.
 // Fill in the fields with your own data.
 // See https://shipfa.st/docs/features/seo
+// SECURITY REVIEWED: dangerouslySetInnerHTML is safe here because all values
+// are from static config (config.ts), never from user input. Do not pass
+// user-controlled data into this function.
 export const renderSchemaTags = () => {
   return (
     <script
