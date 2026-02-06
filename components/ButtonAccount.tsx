@@ -3,70 +3,79 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
+import { LogOut } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 
-// A button to show user account actions
-// - Logout: sign out and go back to homepage
 const ButtonAccount = () => {
 	const { data: session, status } = useSession();
+	const { state } = useSidebar();
+	const isCollapsed = state === "collapsed";
 
 	const handleSignOut = () => {
 		signOut({ callbackUrl: "/" });
 	};
 
-	// Don't show anything if not authenticated (we don't have any info about the user)
 	if (status === "unauthenticated") return null;
 
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
-				<Button variant="outline" className="gap-2">
+				<SidebarMenuButton className="normal-case h-12 cursor-pointer group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
 					{session?.user?.image ? (
 						<img
 							src={session?.user?.image}
 							alt={session?.user?.name || "Account"}
-							className="w-6 h-6 rounded-full shrink-0"
+							className="h-8 w-8 rounded-full shrink-0"
 							referrerPolicy="no-referrer"
-							width={24}
-							height={24}
+							width={32}
+							height={32}
 						/>
 					) : (
-						<span className="w-6 h-6 bg-slate-100 flex justify-center items-center rounded-full shrink-0">
-							{session?.user?.name?.charAt(0) ||
-								session?.user?.email?.charAt(0)}
-						</span>
+						<div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
+							<span className="label text-accent-foreground">
+								{session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || "U"}
+							</span>
+						</div>
 					)}
-
-					{session?.user?.name || "Account"}
-				</Button>
+					{!isCollapsed && (
+						<div className="flex flex-col items-start overflow-hidden">
+							<span className="body font-medium text-foreground truncate w-full">
+								{session?.user?.name || "Account"}
+							</span>
+						</div>
+					)}
+				</SidebarMenuButton>
 			</PopoverTrigger>
-			<PopoverContent className="w-60 p-2" align="end">
-				<div className="space-y-1">
-					<Button
-						variant="ghost"
-						className="w-full justify-start gap-2 hover:bg-red-50 hover:text-red-500 h-auto py-2"
-						onClick={handleSignOut}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 20 20"
-							fill="currentColor"
-							className="w-5 h-5"
-						>
-							<path
-								fillRule="evenodd"
-								d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z"
-								clipRule="evenodd"
-							/>
-							<path
-								fillRule="evenodd"
-								d="M6 10a.75.75 0 01.75-.75h9.546l-1.048-.943a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 11-1.004-1.114l1.048-.943H6.75A.75.75 0 016 10z"
-								clipRule="evenodd"
-							/>
-						</svg>
-						Logout
-					</Button>
+			<PopoverContent
+				className="bg-popover rounded-2xl shadow-lg border border-border p-4 min-w-[240px]"
+				align="start"
+				side="right"
+				sideOffset={12}
+			>
+				{/* User Info */}
+				<div className="mb-2 px-1">
+					<p className="text-sm font-medium text-foreground">
+						{session?.user?.name || "Account"}
+					</p>
+					{session?.user?.email && (
+						<p className="text-xs text-muted-foreground mt-0.5">
+							{session.user.email}
+						</p>
+					)}
 				</div>
+
+				<Separator className="my-3 opacity-50" />
+
+				<Button
+					variant="ghost"
+					onClick={handleSignOut}
+					className="w-full justify-start gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive h-10 px-2 cursor-pointer"
+				>
+					<LogOut className="w-4 h-4" />
+					<span className="body">logout</span>
+				</Button>
 			</PopoverContent>
 		</Popover>
 	);

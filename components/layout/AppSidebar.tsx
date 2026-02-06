@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { Home, Monitor, MessageSquare, ImageIcon, QrCode, Sparkles, Settings, PanelLeft } from "lucide-react";
 import {
     Sidebar,
@@ -23,13 +22,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { toolsConfig } from "@/config";
 import RequestToolModal from "@/components/modals/RequestToolModal";
-import UserPopover from "@/components/UserPopover";
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import ButtonAccount from "@/components/ButtonAccount";
 import { cn } from "@/libs/utils";
 
 export function AppSidebar() {
     const pathname = usePathname();
-    const { data: session } = useSession();
     const { state } = useSidebar();
     const isCollapsed = state === "collapsed";
 
@@ -132,7 +129,7 @@ export function AppSidebar() {
                     <div className="px-3 py-4 group-data-[collapsible=icon]:hidden">
                         <Button
                             onClick={() => setRequestToolModalOpen(true)}
-                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider"
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider cursor-pointer"
                         >
                             Request Tool
                         </Button>
@@ -147,28 +144,7 @@ export function AppSidebar() {
                     {/* User & Settings */}
                     <SidebarMenu>
                         <SidebarMenuItem className="flex justify-center">
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <SidebarMenuButton className="normal-case h-12 cursor-pointer group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
-                                        <div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
-                                            <span className="label text-accent-foreground">
-                                                {session?.user?.name?.[0]?.toUpperCase() || "U"}
-                                            </span>
-                                        </div>
-                                        {!isCollapsed && (
-                                            <div className="flex flex-col items-start overflow-hidden">
-                                                <span className="body font-medium text-foreground truncate w-full">
-                                                    {session?.user?.name || "User"}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </SidebarMenuButton>
-                                </PopoverTrigger>
-                                <UserPopover
-                                    email={session?.user?.email || ""}
-                                    name={session?.user?.name || ""}
-                                />
-                            </Popover>
+                            <ButtonAccount />
                         </SidebarMenuItem>
 
                         <SidebarMenuItem>

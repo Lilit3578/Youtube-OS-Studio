@@ -47,7 +47,7 @@ export default function CommentExplorerPage() {
     }, [url]);
 
     const extractVideoIdClient = (url: string) => {
-        const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?/\s]{11})/;
         const match = url.match(regex);
         return match ? match[1] : null;
     };

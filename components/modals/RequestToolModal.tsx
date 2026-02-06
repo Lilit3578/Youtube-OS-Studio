@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
-import { useSession } from "next-auth/react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
+import apiClient from "@/libs/api";
 import {
     Dialog,
     DialogContent,
@@ -23,7 +22,6 @@ interface RequestToolModalProps {
 }
 
 export default function RequestToolModal({ isOpen, onClose }: RequestToolModalProps) {
-    const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         toolName: "",
@@ -47,13 +45,7 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
         setLoading(true);
 
         try {
-            const response = await fetch("/api/request-tool", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
-
-            if (!response.ok) throw new Error("Failed to submit");
+            await apiClient.post("/request-tool", formData);
 
             toast.success("Request submitted successfully!");
             onClose();
@@ -67,8 +59,8 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
                 similarTools: "",
                 contactConsent: false,
             });
-        } catch (error) {
-            toast.error("Failed to submit request. Please try again.");
+        } catch {
+            // apiClient auto-toasts errors and handles 401 redirect
         } finally {
             setLoading(false);
         }
