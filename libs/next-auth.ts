@@ -85,41 +85,45 @@ export const authOptions = {
       // Add custom fields to user document on sign in
       if (user && account) {
         try {
-          const client = await connectMongo;
-          if (!client) {
-            console.error("MongoDB connection failed during sign-in");
-            return false;
-          }
+          // Import User model dynamically to avoid circular dependencies
+          const { default: User } = await import("@/models/User");
+          await import("@/libs/mongoose");
 
-          const db = client.db();
-          const usersCollection = db.collection("users");
+          console.log("[DEBUG] Sign-in callback running for:", user.email);
 
-          // Check if user already has usage fields
-          const existingUser = await usersCollection.findOne(
+          // Check if user already has usage fields using Mongoose
+          const existingUser = await User.findOne(
             { email: user.email },
-            { projection: { usage: 1 } }
+            { usage: 1 }
           );
 
-          // Build update operations
-          const updateOps: any = {
-            $addToSet: { authProviders: account.provider },
-          };
+          console.log("[DEBUG] Existing user usage:", existingUser?.usage ? "EXISTS" : "MISSING");
 
           // Initialize usage fields if they don't exist
           if (!existingUser?.usage) {
-            updateOps.$set = {
-              usage: {
-                metadataInspector: { count: 0, lastResetDate: new Date() },
-                commentExplorer: { count: 0, lastResetDate: new Date() },
-                toolRequests: { count: 0, lastResetDate: new Date() },
-              },
-            };
+            console.log("[DEBUG] Initializing usage fields for new user with Mongoose");
+            await User.updateOne(
+              { email: user.email },
+              {
+                $addToSet: { authProviders: account.provider },
+                $set: {
+                  usage: {
+                    metadataInspector: { count: 0, lastResetDate: new Date() },
+                    commentExplorer: { count: 0, lastResetDate: new Date() },
+                    toolRequests: { count: 0, lastResetDate: new Date() },
+                  },
+                },
+              }
+            );
+          } else {
+            // Just add the auth provider if usage already exists
+            await User.updateOne(
+              { email: user.email },
+              { $addToSet: { authProviders: account.provider } }
+            );
           }
 
-          await usersCollection.updateOne(
-            { email: user.email },
-            updateOps
-          );
+          console.log("[DEBUG] Sign-in callback completed successfully");
         } catch (error) {
           console.error("Error updating user during sign-in:", error);
           // Allow sign-in to proceed even if usage tracking fails

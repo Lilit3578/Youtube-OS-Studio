@@ -106,6 +106,9 @@ export async function POST(req: Request) {
         );
 
         // Then attempt atomic increment only if under limit
+        console.log("[DEBUG] Attempting findOneAndUpdate with email:", session.user.email);
+        console.log("[DEBUG] Query condition: usage.commentExplorer.count < ", DAILY_LIMIT);
+
         const result = await User.findOneAndUpdate(
             {
                 email: session.user.email,
@@ -117,9 +120,20 @@ export async function POST(req: Request) {
             { new: true }
         );
 
+        console.log("[DEBUG] findOneAndUpdate result:", result ? "Found user" : "NULL");
+
         if (!result) {
             // Either user not found or limit reached
             const userExists = await User.exists({ email: session.user.email });
+            console.log("[DEBUG] User exists check:", userExists);
+
+            // Debug: Check actual user state
+            const debugUser = await User.findOne({ email: session.user.email });
+            console.log("[DEBUG] User usage field:", JSON.stringify(debugUser?.usage, null, 2));
+            console.log("[DEBUG] Type of count:", typeof debugUser?.usage?.commentExplorer?.count);
+            console.log("[DEBUG] Count value:", debugUser?.usage?.commentExplorer?.count);
+            console.log("[DEBUG] Is count < 20?", debugUser?.usage?.commentExplorer?.count < 20);
+
             if (!userExists) {
                 return NextResponse.json({ error: "User not found" }, { status: 404 });
             }
