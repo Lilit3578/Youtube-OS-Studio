@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import apiClient from "@/libs/api";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 import {
     Dialog,
     DialogContent,
@@ -38,7 +39,7 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
 
         // Validation
         if (!formData.toolName || !formData.problemDescription || !formData.frequency) {
-            toast.error("Please fill in all required fields");
+            toast.error(ERROR_MESSAGES.FORM.REQUIRED_FIELDS);
             return;
         }
 
@@ -47,9 +48,8 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
         try {
             await apiClient.post("/request-tool", formData);
 
-            toast.success("Request submitted successfully!");
-            onClose();
-            // Reset form
+            toast.success(SUCCESS_MESSAGES.TOOLS.REQUEST_SUBMITTED);
+            // Reset form before closing to avoid flash of empty form
             setFormData({
                 toolName: "",
                 problemDescription: "",
@@ -59,6 +59,7 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
                 similarTools: "",
                 contactConsent: false,
             });
+            onClose();
         } catch {
             // apiClient auto-toasts errors and handles 401 redirect
         } finally {
@@ -153,7 +154,7 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
 
                     {/* Priority */}
                     <div>
-                        <Label className="block text-sm font-medium text-neutral-700 mb-2">
+                        <Label className="block p-medium text-foreground mb-2">
                             Priority
                         </Label>
                         <RadioGroup
@@ -163,7 +164,7 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
                             {['critical', 'high', 'medium', 'low'].map((pri) => (
                                 <div key={pri} className="flex items-center space-x-2">
                                     <RadioGroupItem value={pri} id={`pri-${pri}`} />
-                                    <Label htmlFor={`pri-${pri}`} className="text-sm text-neutral-700 capitalize cursor-pointer">
+                                    <Label htmlFor={`pri-${pri}`} className="text-sm text-foreground capitalize cursor-pointer">
                                         {pri}
                                     </Label>
                                 </div>
@@ -173,7 +174,7 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
 
                     {/* Similar Tools */}
                     <div>
-                        <Label className="block text-sm font-medium text-neutral-700 mb-1">
+                        <Label className="block p-medium text-foreground mb-1">
                             Similar Tools
                         </Label>
                         <Input

@@ -1,23 +1,11 @@
 import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { auth } from "@/libs/next-auth";
-import config from "@/config";
 
-// This is a server-side component to ensure the user is logged in.
-// If not, it will redirect to the login page.
-// It's applied to all subpages of /dashboard in /app/dashboard/*** pages
-// You can also add custom static UI elements like a Navbar, Sidebar, Footer, etc..
-// See https://shipfa.st/docs/tutorials/private-page
-export default async function LayoutPrivate({
+// Auth is already enforced by the parent (protected) layout.
+// This layout exists for potential dashboard-specific UI (sidebar, nav, etc.).
+export default function LayoutDashboard({
   children,
 }: {
   children: ReactNode;
 }) {
-  const session = await auth();
-
-  if (!session) {
-    redirect(config.auth.loginUrl);
-  }
-
   return <>{children}</>;
 }

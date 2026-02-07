@@ -16,22 +16,18 @@ const CrispChat = (): null => {
   const pathname = usePathname();
   const { data } = useSession();
 
+  // Initialize Crisp once
   useEffect(() => {
     if (config?.crisp?.id) {
-      // Set up Crisp
       Crisp.configure(config.crisp.id);
+    }
+  }, []);
 
-      // (Optional) If onlyShowOnRoutes array is not empty in config.js file, Crisp will be hidden on the routes in the array.
-      // Use <AppButtonSupport> instead to show it (user clicks on the button to show Crisp—it cleans the UI)
-      if (
-        config.crisp.onlyShowOnRoutes &&
-        !config.crisp.onlyShowOnRoutes?.includes(pathname)
-      ) {
-        Crisp.chat.hide();
-        Crisp.chat.onChatClosed(() => {
-          Crisp.chat.hide();
-        });
-      }
+  // Handle route-specific Crisp visibility
+  useEffect(() => {
+    if (config?.crisp?.id && config.crisp.onlyShowOnRoutes &&
+        !config.crisp.onlyShowOnRoutes?.includes(pathname)) {
+      Crisp.chat.hide();
     }
   }, [pathname]);
 

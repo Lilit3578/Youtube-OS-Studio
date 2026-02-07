@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import ButtonSupport from "@/components/ButtonSupport";
+import { ERROR_MESSAGES } from "@/libs/constants/messages";
 
 // A simple error boundary to show a nice error page if something goes wrong (Error Boundary)
-// Users can contanct support, go to the main page or try to reset/refresh to fix the error
+// Users can contact support, go to the main page or try to reset/refresh to fix the error
 export default function Error({
   error,
   reset,
@@ -12,6 +14,10 @@ export default function Error({
   error: Error;
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error("Unhandled error:", error);
+  }, [error]);
+
   return (
     <>
       <div className="h-screen w-full flex flex-col justify-center items-center text-center gap-6 p-6">
@@ -134,7 +140,9 @@ export default function Error({
           Something went wrong 🥲
         </p>
 
-        <p className="text-red-500">{error?.message}</p>
+        <p className="text-muted-foreground">
+          {ERROR_MESSAGES.GLOBAL.ERROR_BOUNDARY}
+        </p>
 
         <div className="flex flex-wrap gap-4 justify-center">
           <button className="btn btn-sm" onClick={reset}>

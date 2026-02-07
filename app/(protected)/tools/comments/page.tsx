@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import * as XLSX from "xlsx";
 
@@ -17,6 +17,19 @@ const extractVideoIdClient = (url: string): string | null => {
     const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?/\s]{11})/;
     const match = url.match(regex);
     return match ? match[1] : null;
+};
+
+/** Sanitize text for CSV/Excel formula injection. */
+const sanitizeForExport = (text: string): string => {
+    if (typeof text !== "string") return text;
+    // Remove control characters that can break CSV cell boundaries
+    let cleaned = text.replace(/[\r\n\t]/g, " ");
+    // Prefix dangerous leading characters
+    const unsafeChars = ["=", "+", "-", "@", "|", "\\"];
+    if (unsafeChars.some((char) => cleaned.startsWith(char))) {
+        cleaned = "'" + cleaned;
+    }
+    return cleaned;
 };
 
 export default function CommentExplorerPage() {
@@ -36,24 +49,12 @@ export default function CommentExplorerPage() {
 
     // Track last-fetched video ID to prevent duplicate requests
     const lastFetchedVideoId = useRef<string | null>(null);
+    const loadingRef = useRef(false);
 
-    // Auto-fetch only when a complete, valid 11-char video ID is detected
-    useEffect(() => {
-        const videoId = extractVideoIdClient(url);
-        if (!videoId || videoId === lastFetchedVideoId.current) return;
+    const handleFetch = useCallback(async (inputUrl: string) => {
+        if (loadingRef.current) return;
 
-        const timer = setTimeout(() => {
-            lastFetchedVideoId.current = videoId;
-            handleFetch(url);
-        }, 800);
-
-        return () => clearTimeout(timer);
-    }, [url]);
-
-    const handleFetch = async (inputUrl: string) => {
-        // Avoid double fetching if loading
-        if (loading) return;
-
+        loadingRef.current = true;
         setLoading(true);
         setHasSearched(true);
         setError(null);
@@ -72,7 +73,6 @@ export default function CommentExplorerPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                // Map API errors to local ERROR_MESSAGES if possible, otherwise use data.error
                 const errorMsg = data.errorKey && (ERROR_MESSAGES.TOOLS.COMMENTS as any)[data.errorKey]
                     ? (ERROR_MESSAGES.TOOLS.COMMENTS as any)[data.errorKey]
                     : data.error || ERROR_MESSAGES.TOOLS.COMMENTS.GENERIC_FAIL;
@@ -91,46 +91,53 @@ export default function CommentExplorerPage() {
                 other: resTypes.counts.other
             });
 
-        } catch (err: any) {
+        } catch {
             setError(ERROR_MESSAGES.GLOBAL.NETWORK_ERROR);
         } finally {
+            loadingRef.current = false;
             setLoading(false);
         }
-    };
+    }, []);
+
+    // Auto-fetch only when a complete, valid 11-char video ID is detected
+    useEffect(() => {
+        const videoId = extractVideoIdClient(url);
+        if (!videoId || videoId === lastFetchedVideoId.current) return;
+
+        const timer = setTimeout(() => {
+            lastFetchedVideoId.current = videoId;
+            handleFetch(url);
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [url, handleFetch]);
 
     const filteredComments = useMemo(() => {
         if (filter === "all") return comments;
         return comments.filter((c) => c.intent === filter);
     }, [comments, filter]);
 
-    const handleCopyAll = () => {
+    const handleCopyAll = async () => {
         if (filteredComments.length === 0) return;
         const textToCopy = filteredComments.map(c => `- ${c.text}`).join("\n");
-        navigator.clipboard.writeText(textToCopy);
-        toast.success(`Copied ${filteredComments.length} comments to clipboard`);
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            toast.success(`Copied ${filteredComments.length} comments to clipboard`);
+        } catch {
+            toast.error(ERROR_MESSAGES.GLOBAL.CLIPBOARD_FAILED);
+        }
     };
 
     const handleDownload = (format: "csv" | "excel") => {
         if (comments.length === 0) return;
 
-        // Sanitize for formula injection
-        const sanitize = (text: string) => {
-            if (typeof text !== "string") return text;
-            // If starts with =, +, -, @, prefix with '
-            const unsafeChars = ["=", "+", "-", "@"];
-            if (unsafeChars.some((char) => text.startsWith(char))) {
-                return "'" + text;
-            }
-            return text;
-        };
-
         const dataToExport = comments.map((c, index) => ({
             Line: index + 1,
-            Date: c.publishedAt,
+            Date: sanitizeForExport(c.publishedAt),
             Likes: c.likeCount,
             Replies: c.replyCount,
-            Intent: c.intent,
-            Comment: sanitize(c.text),
+            Intent: sanitizeForExport(c.intent),
+            Comment: sanitizeForExport(c.text),
         }));
 
         if (format === "csv") {
@@ -138,13 +145,14 @@ export default function CommentExplorerPage() {
             const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
 
             const blob = new Blob([csvOutput], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
+            const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", url);
+            link.setAttribute("href", blobUrl);
             link.setAttribute("download", "youtube_comments.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
         } else {
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
@@ -153,19 +161,13 @@ export default function CommentExplorerPage() {
         }
     };
 
-    // Mapping counts for FilterTabs which expects specific keys
     const mappedCounts = {
         total: counts.total,
-        question: counts.question, // from api 'questions' mapped to state 'question' or fixing state naming
-        request: counts.request, // api 'requests'
-        feedback: counts.feedback, // api 'feedback'
+        question: counts.question,
+        request: counts.request,
+        feedback: counts.feedback,
         other: counts.other
     };
-
-    // Fix: Types mismatch if I don't align them. 
-    // API response: questions, requests. State: question, request. 
-    // Let's adjust state or usage.
-    // In `handleFetch`: `question: resTypes.counts.questions` (Correct)
 
     return (
         <div className="w-full">
@@ -199,7 +201,7 @@ export default function CommentExplorerPage() {
 
             {/* Branding Compliance */}
             <div className="mt-12 text-center">
-                <div className="inline-flex items-center gap-2 text-xs text-neutral-400">
+                <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                     <span>Data provided by YouTube</span>
                     <svg
                         width="24"

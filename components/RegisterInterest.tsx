@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check } from "lucide-react";
 import toast from "react-hot-toast";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 
 interface RegisterInterestProps {
     toolId: string;
@@ -51,13 +52,13 @@ export default function RegisterInterest({
 
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.error || "Failed to register");
+                throw new Error(data.error || ERROR_MESSAGES.TOOLS.REGISTER_FAILED);
             }
 
             setRegistered(true);
-            toast.success("You're on the list!");
+            toast.success(SUCCESS_MESSAGES.TOOLS.INTEREST_REGISTERED);
         } catch (err: any) {
-            toast.error(err.message || "Something went wrong");
+            toast.error(err.message || ERROR_MESSAGES.GLOBAL.GENERIC);
         } finally {
             setLoading(false);
         }

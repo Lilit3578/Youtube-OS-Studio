@@ -11,9 +11,13 @@ export const ERROR_MESSAGES = {
         EMAIL_SEND_FAILED:
             "We couldn't send the sign-in email. Please try again later.",
         GENERIC_SIGNIN: "Unable to sign in. Please try again.",
+        SIGNIN_FAILED: "Sign-in failed. Please try again.",
         RATE_LIMIT: "Too many sign-in attempts. Please try again in a few minutes.",
+        LOGIN_REQUIRED: "Please sign in to continue.",
+        PLAN_REQUIRED: "Pick a plan to use this feature.",
     },
     GLOBAL: {
+        GENERIC: "Something went wrong. Please try again.",
         DAILY_LIMIT: "Daily usage limit reached. Please try again tomorrow.",
         NETWORK_ERROR:
             "Network error. Please check your connection and try again.",
@@ -25,8 +29,19 @@ export const ERROR_MESSAGES = {
             "This session is open in another tab. Please continue in one tab to avoid conflicts.",
         ACTION_INTERRUPTED:
             "Your action was interrupted by a page refresh. Please try again.",
+        CLIPBOARD_FAILED: "Failed to copy to clipboard.",
+        ERROR_BOUNDARY:
+            "An unexpected error occurred. Please try again or contact support.",
+    },
+    ACCOUNT: {
+        SAVE_FAILED: "Failed to save preferences.",
+        DELETE_FAILED: "Failed to delete account.",
+    },
+    FORM: {
+        REQUIRED_FIELDS: "Please fill in all required fields.",
     },
     TOOLS: {
+        REGISTER_FAILED: "Failed to register interest.",
         QR: {
             EMPTY: "Paste a URL to generate a QR code",
             INVALID_URL: "Please enter a valid URL",
@@ -46,6 +61,7 @@ export const ERROR_MESSAGES = {
             BROWSER_LIMIT:
                 "image processing failed due to browser limitations, try a smaller image or refresh the page",
             GENERIC_FAIL: "image compression failed, please try again",
+            ZIP_FAILED: "Failed to create zip file.",
         },
         METADATA: {
             EMPTY: "Paste a YouTube video URL to inspect its metadata.",
@@ -68,4 +84,22 @@ export const ERROR_MESSAGES = {
     },
 } as const;
 
+export const SUCCESS_MESSAGES = {
+    ACCOUNT: {
+        SAVED: "Preferences saved",
+        DELETED: "Account deleted",
+    },
+    CLIPBOARD: {
+        COMMENT_COPIED: "Comment copied to clipboard",
+    },
+    DOWNLOAD: {
+        ALL_IMAGES: "All images downloaded!",
+    },
+    TOOLS: {
+        REQUEST_SUBMITTED: "Request submitted successfully!",
+        INTEREST_REGISTERED: "You're on the list!",
+    },
+} as const;
+
 export type ErrorMessages = typeof ERROR_MESSAGES;
+export type SuccessMessages = typeof SUCCESS_MESSAGES;

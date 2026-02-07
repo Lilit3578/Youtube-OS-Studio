@@ -20,6 +20,8 @@ const hasGoogleAuth = process.env.GOOGLE_ID && process.env.GOOGLE_SECRET;
 export const authOptions = {
   // Set any random key in .env.local
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
+  debug: process.env.NODE_ENV === "development",
   providers: [
     // Google OAuth (optional - only enabled if credentials are provided)
     ...(hasGoogleAuth
@@ -92,19 +94,31 @@ export const authOptions = {
           const db = client.db();
           const usersCollection = db.collection("users");
 
-          // Update user with custom fields if they don't exist
+          // Check if user already has usage fields
+          const existingUser = await usersCollection.findOne(
+            { email: user.email },
+            { projection: { usage: 1 } }
+          );
+
+          // Build update operations
+          const updateOps: any = {
+            $addToSet: { authProviders: account.provider },
+          };
+
+          // Initialize usage fields if they don't exist
+          if (!existingUser?.usage) {
+            updateOps.$set = {
+              usage: {
+                metadataInspector: { count: 0, lastResetDate: new Date() },
+                commentExplorer: { count: 0, lastResetDate: new Date() },
+                toolRequests: { count: 0, lastResetDate: new Date() },
+              },
+            };
+          }
+
           await usersCollection.updateOne(
             { email: user.email },
-            {
-              $addToSet: { authProviders: account.provider },
-              $setOnInsert: {
-                usage: {
-                  metadataInspector: { count: 0, lastResetDate: new Date() },
-                  commentExplorer: { count: 0, lastResetDate: new Date() },
-                },
-              },
-            },
-            { upsert: false } // Don't create if doesn't exist (adapter handles creation)
+            updateOps
           );
         } catch (error) {
           console.error("Error updating user during sign-in:", error);

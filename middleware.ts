@@ -32,8 +32,10 @@ export async function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    // Validate callbackUrl is a safe relative path (no protocol-relative or absolute URLs)
+    const safeCallback = pathname.startsWith("/") && !pathname.startsWith("//") ? pathname : "/";
     const loginUrl = new URL("/", req.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    loginUrl.searchParams.set("callbackUrl", safeCallback);
     return NextResponse.redirect(loginUrl);
   }
 

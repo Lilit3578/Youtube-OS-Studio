@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { toolsConfig } from "@/config";
+import config from "@/config";
 import { cn } from "@/libs/utils";
+import { getSEOTags } from "@/libs/seo";
 import { FileSearch, MessageSquare, Image, QrCode, ArrowRight } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const metadata = getSEOTags({
+  title: `Dashboard | ${config.appName}`,
+  description: "Your YouTube creator toolkit dashboard. Access all tools in one place.",
+  extraTags: {
+    robots: { index: false, follow: false },
+  },
+});
 
 // Icon mapping for tools
 const toolIcons = {

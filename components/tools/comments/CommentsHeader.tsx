@@ -4,12 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Download, FileText, FileSpreadsheet } from "lucide-react"; // Using FileSpreadsheet for Excel/CSV approximation or similar
-// Actually, Lucide has 'FileCsv' maybe? Or just FileText for CSV and FileSpreadsheet for Excel.
-// Let's check available icons. Lucide icons are standard.
-// Using FileText for CSV and FileSpreadsheet (or similar like Sheet) for Excel.
-// Assuming FileSpreadsheet exists, otherwise FileText for both.
-import { cn } from "@/libs/utils";
+import { FileText, FileSpreadsheet } from "lucide-react";
 
 interface CommentsHeaderProps {
     onDownloadConfig: (format: "csv" | "excel") => void;
@@ -19,7 +14,7 @@ interface CommentsHeaderProps {
 export default function CommentsHeader({ onDownloadConfig, hasComments }: CommentsHeaderProps) {
     return (
         <div className="grid items-center mt-8 mb-4 gap-4">
-            <div className="flex items-center items-center justify-between">
+            <div className="flex items-center justify-between">
                 <h2 className="text-[32px] leading-[36px] font-serif font-normal text-foreground">
                     comments
                 </h2>

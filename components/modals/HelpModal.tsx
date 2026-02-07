@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { helpContent } from "@/config/help-content";
 import {
     Dialog,
@@ -58,7 +57,8 @@ export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
                             <iframe
                                 src={content.videoUrl}
                                 className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                sandbox="allow-scripts allow-same-origin allow-presentation"
+                                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                                 title={`${content.title} tutorial video`}
                             />

@@ -7,13 +7,13 @@ import Link from "next/link";
 import config from "@/config";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
+import { ERROR_MESSAGES } from "@/libs/constants/messages";
 
 // Sign-in component: shows email + Google sign-in form when unauthenticated,
 // or the user avatar link when authenticated.
 const ButtonSignin = ({
   extraStyle,
 }: {
-  text?: string;
   extraStyle?: string;
 }) => {
   const { data: session, status } = useSession();
@@ -34,9 +34,13 @@ const ButtonSignin = ({
       });
       if (res?.ok) {
         setEmailSent(true);
+      } else {
+        const { toast } = await import("react-hot-toast");
+        toast.error(res?.error || ERROR_MESSAGES.AUTH.SIGNIN_FAILED);
       }
     } catch {
-      // Fall through — user can retry
+      const { toast } = await import("react-hot-toast");
+      toast.error(ERROR_MESSAGES.AUTH.SIGNIN_FAILED);
     } finally {
       setLoading(false);
     }

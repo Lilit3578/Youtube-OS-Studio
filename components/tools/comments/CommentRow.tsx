@@ -5,16 +5,21 @@ import { Comment } from "@/types/comments";
 import { ThumbsUp, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
-// Using Intl.NumberFormat directly in the component for compact notation
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
+const compactFormatter = new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 });
 
 interface CommentRowProps {
     comment: Comment;
 }
 
 export default function CommentRow({ comment }: CommentRowProps) {
-    const handleCopy = () => {
-        navigator.clipboard.writeText(comment.text);
-        toast.success("Comment copied to clipboard");
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(comment.text);
+            toast.success(SUCCESS_MESSAGES.CLIPBOARD.COMMENT_COPIED);
+        } catch {
+            toast.error(ERROR_MESSAGES.GLOBAL.CLIPBOARD_FAILED);
+        }
     };
 
     return (
@@ -29,11 +34,11 @@ export default function CommentRow({ comment }: CommentRowProps) {
                 <div className="flex items-center gap-2 text-muted-foreground">
                     <ThumbsUp className="w-4 h-4" strokeWidth={1.5} />
                     <span className="caption min-w-[20px]">
-                        {new Intl.NumberFormat('en-US', { notation: "compact", maximumFractionDigits: 1 }).format(comment.likeCount)}
+                        {compactFormatter.format(comment.likeCount)}
                     </span>
                 </div>
 
-                <Button variant="ghost" size="icon" onClick={handleCopy} className="h-8 w-8 text-ink-500 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                <Button variant="ghost" size="icon" onClick={handleCopy} aria-label="Copy comment" className="h-8 w-8 text-ink-500 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
                     <Copy className="w-4 h-4" />
                 </Button>
             </div>

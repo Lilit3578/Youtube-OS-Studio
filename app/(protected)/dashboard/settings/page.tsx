@@ -10,6 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 
 interface Preferences {
     exportFormat: string;
@@ -81,11 +82,11 @@ export default function SettingsPage() {
             });
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.error || "Failed to save");
+                throw new Error(data.error || ERROR_MESSAGES.ACCOUNT.SAVE_FAILED);
             }
-            toast.success("Preferences saved");
+            toast.success(SUCCESS_MESSAGES.ACCOUNT.SAVED);
         } catch (err: any) {
-            toast.error(err.message || "Failed to save preferences");
+            toast.error(err.message || ERROR_MESSAGES.ACCOUNT.SAVE_FAILED);
         } finally {
             setSaving(false);
         }
@@ -98,12 +99,12 @@ export default function SettingsPage() {
             const res = await fetch("/api/account/delete", { method: "DELETE" });
             if (!res.ok) {
                 const data = await res.json();
-                throw new Error(data.error || "Failed to delete account");
+                throw new Error(data.error || ERROR_MESSAGES.ACCOUNT.DELETE_FAILED);
             }
-            toast.success("Account deleted");
+            toast.success(SUCCESS_MESSAGES.ACCOUNT.DELETED);
             signOut({ callbackUrl: "/" });
         } catch (err: any) {
-            toast.error(err.message || "Failed to delete account");
+            toast.error(err.message || ERROR_MESSAGES.ACCOUNT.DELETE_FAILED);
             setDeleting(false);
         }
     };
@@ -247,6 +248,8 @@ export default function SettingsPage() {
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
+                                role="switch"
+                                aria-label="Tool completion notifications"
                                 className="sr-only peer"
                                 checked={prefs.notifications.toolCompletion}
                                 onChange={(e) =>
@@ -274,6 +277,8 @@ export default function SettingsPage() {
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
+                                role="switch"
+                                aria-label="New feature announcements"
                                 className="sr-only peer"
                                 checked={prefs.notifications.newFeatures}
                                 onChange={(e) =>
@@ -299,6 +304,8 @@ export default function SettingsPage() {
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
+                                role="switch"
+                                aria-label="Marketing emails"
                                 className="sr-only peer"
                                 checked={prefs.notifications.marketing}
                                 onChange={(e) =>
@@ -333,6 +340,8 @@ export default function SettingsPage() {
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
+                                role="switch"
+                                aria-label="Analytics opt-in"
                                 className="sr-only peer"
                                 checked={prefs.analyticsOptIn}
                                 onChange={(e) =>

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/libs/utils";
 import toast from "react-hot-toast";
-import { FileImage, FileText, Download, Question } from "@phosphor-icons/react";
+import { FileImage, FileText, Download } from "@phosphor-icons/react";
 
 
 // Internal 
@@ -19,7 +19,7 @@ import { useThumbnailCompressor } from "@/libs/hooks/useThumbnailCompressor";
 import ProcessedImageItem from "./processed-image-item";
 import { THUMBNAIL_CONFIG } from "@/libs/thumbnail-utils";
 import { formatBytes } from "@/libs/utils";
-import { ERROR_MESSAGES } from "@/libs/constants/messages";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 
 export default function ImageCompressor() {
     const { items, addFiles } = useThumbnailCompressor();
@@ -38,7 +38,7 @@ export default function ImageCompressor() {
         setIsDragging(false);
     }, []);
 
-    const validateFile = (file: File): string | null => {
+    const validateFile = useCallback((file: File): string | null => {
         const validTypes = ["image/jpeg", "image/png", "image/jpg"];
         if (!validTypes.includes(file.type)) {
             return ERROR_MESSAGES.TOOLS.THUMBNAIL.UNSUPPORTED_FORMAT;
@@ -48,19 +48,23 @@ export default function ImageCompressor() {
             return ERROR_MESSAGES.TOOLS.THUMBNAIL.TOO_LARGE;
         }
         return null;
-    };
+    }, []);
 
-    const onFilesSelected = (files: File[]) => {
+    const MAX_FILE_COUNT = 20;
+
+    const onFilesSelected = useCallback((files: File[]) => {
         if (files.length === 0) return;
 
-        // Map files with their validation errors
-        const filesWithValidation = files.map(file => ({
+        // Limit number of files per batch
+        const filesToProcess = files.slice(0, MAX_FILE_COUNT);
+
+        const filesWithValidation = filesToProcess.map(file => ({
             file,
             validationError: validateFile(file)
         }));
 
         addFiles(filesWithValidation);
-    };
+    }, [addFiles, validateFile]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -69,13 +73,13 @@ export default function ImageCompressor() {
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             onFilesSelected(Array.from(e.dataTransfer.files));
         }
-    }, [addFiles]);
+    }, [onFilesSelected]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             onFilesSelected(Array.from(e.target.files));
         }
-    }, [addFiles]);
+    }, [onFilesSelected]);
 
     const handleDownloadAll = async (format: "png" | "jpg") => {
         const completedItems = items.filter(item => item.status === "done" && item.blob);
@@ -103,14 +107,12 @@ export default function ImageCompressor() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            toast.success("All images downloaded!");
+            toast.success(SUCCESS_MESSAGES.DOWNLOAD.ALL_IMAGES);
         } catch (error) {
             console.error("Failed to create zip:", error);
-            toast.error("Failed to make zip file.");
+            toast.error(ERROR_MESSAGES.TOOLS.THUMBNAIL.ZIP_FAILED);
         }
     };
-
-    const completedCount = items.filter(i => i.status === "done").length;
 
     return (
         <div className="flex flex-col gap-6 w-full">
