@@ -105,38 +105,34 @@ export async function POST(req: Request) {
             }
         );
 
-        // Then attempt atomic increment only if under limit
-        console.log("[DEBUG] Attempting findOneAndUpdate with email:", session.user.email);
-        console.log("[DEBUG] Query condition: usage.commentExplorer.count < ", DAILY_LIMIT);
+        // Get user and check limit (avoiding nested field query issues)
+        console.log("[DEBUG] Finding user:", session.user.email);
 
-        const result = await User.findOneAndUpdate(
-            {
-                email: session.user.email,
-                "usage.commentExplorer.count": { $lt: DAILY_LIMIT },
-            },
-            {
-                $inc: { "usage.commentExplorer.count": 1 },
-            },
-            { new: true }
-        );
+        const user = await User.findOne({ email: session.user.email });
 
-        console.log("[DEBUG] findOneAndUpdate result:", result ? "Found user" : "NULL");
+        if (!user) {
+            console.log("[DEBUG] User not found");
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
 
-        if (!result) {
-            // Either user not found or limit reached
-            const userExists = await User.exists({ email: session.user.email });
-            console.log("[DEBUG] User exists check:", userExists);
+        console.log("[DEBUG] User found, checking usage");
+        console.log("[DEBUG] Current count:", user.usage?.commentExplorer?.count);
+        console.log("[DEBUG] Limit:", DAILY_LIMIT);
 
-            // Debug: Check actual user state
-            const debugUser = await User.findOne({ email: session.user.email });
-            console.log("[DEBUG] User usage field:", JSON.stringify(debugUser?.usage, null, 2));
-            console.log("[DEBUG] Type of count:", typeof debugUser?.usage?.commentExplorer?.count);
-            console.log("[DEBUG] Count value:", debugUser?.usage?.commentExplorer?.count);
-            console.log("[DEBUG] Is count < 20?", debugUser?.usage?.commentExplorer?.count < 20);
+        // Check if usage fields exist, if not initialize them
+        if (!user.usage || !user.usage.commentExplorer) {
+            console.log("[DEBUG] Usage fields missing, initializing");
+            user.usage = {
+                metadataInspector: { count: 0, lastResetDate: new Date() },
+                commentExplorer: { count: 0, lastResetDate: new Date() },
+                toolRequests: { count: 0, lastResetDate: new Date() },
+            };
+            await user.save();
+        }
 
-            if (!userExists) {
-                return NextResponse.json({ error: "User not found" }, { status: 404 });
-            }
+        // Check if under limit
+        if (user.usage.commentExplorer.count >= DAILY_LIMIT) {
+            console.log("[DEBUG] Limit reached");
             return NextResponse.json(
                 {
                     error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
@@ -145,6 +141,12 @@ export async function POST(req: Request) {
                 { status: 429 }
             );
         }
+
+        // Increment counter
+        console.log("[DEBUG] Incrementing counter");
+        user.usage.commentExplorer.count += 1;
+        await user.save();
+        console.log("[DEBUG] Counter incremented to:", user.usage.commentExplorer.count);
 
         // Fetch comments
         const comments = await fetchComments(videoId);
