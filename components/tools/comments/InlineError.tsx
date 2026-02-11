@@ -14,11 +14,11 @@ export default function InlineError({ message, className }: InlineErrorProps) {
 
     return (
         <div className={cn(
-            "flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 animate-in fade-in slide-in-from-top-1 duration-200",
+            "flex items-center gap-3 p-4 bg-ink-200 border border-ink-300 rounded-xl animate-in fade-in slide-in-from-top-1 duration-200",
             className
         )}>
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <p className="body font-medium leading-relaxed">
+            <AlertCircle className="w-5 h-5 shrink-0 text-system-danger" />
+            <p className="body font-medium leading-relaxed text-system-danger">
                 {message}
             </p>
         </div>

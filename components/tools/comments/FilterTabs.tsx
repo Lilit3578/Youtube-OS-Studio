@@ -4,6 +4,7 @@ import React from "react";
 import { cn } from "@/libs/utils";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export type FilterType = "all" | "question" | "request" | "feedback";
 
@@ -29,41 +30,42 @@ export default function FilterTabs({ currentFilter, onFilterChange, onCopyAll, c
     ];
 
     return (
-        <div className="flex items-center justify-between mb-6 gap-4 overflow-x-auto pb-2 scrollbar-hide">
-            <div className="flex items-center gap-2">
-                {tabs.map((tab) => (
-                    <Button
-                        key={tab.id}
-                        variant="ghost"
-                        onClick={() => onFilterChange(tab.id)}
-                        className={cn(
-                            "body font-medium px-4 py-1.5 rounded-full transition-all whitespace-nowrap flex items-center gap-2 h-auto",
-                            currentFilter === tab.id
-                                ? "bg-accent text-accent-foreground"
-                                : "bg-transparent text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                        )}
-                    >
-                        <span>{tab.label}</span>
-                        {tab.count > 0 && (
-                            <span className={cn(
-                                "caption",
-                                currentFilter === tab.id ? "bg-ink-300" : "bg-ink-200"
-                            )}>
-                                {tab.count}
-                            </span>
-                        )}
-                    </Button>
-                ))}
-            </div>
+        <>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    {tabs.map((tab) => (
+                        <Button
+                            key={tab.id}
+                            variant="ghost"
+                            onClick={() => onFilterChange(tab.id)}
+                            className={cn(
+                                "body font-medium px-4 py-1.5 rounded-full transition-all whitespace-nowrap flex items-center gap-2 h-auto !normal-case cursor-pointer",
+                                currentFilter === tab.id
+                                    ? "bg-ink-400 text-ink-1000"
+                                    : "bg-transparent text-ink-800"
+                            )}
+                        >
+                            <span>{tab.label}</span>
+                            {tab.count > 0 && (
+                                <span className="body font-medium">
+                                    {tab.count}
+                                </span>
+                            )}
+                        </Button>
+                    ))}
+                </div>
 
-            <Button
-                variant="ghost"
-                onClick={onCopyAll}
-                className="flex items-center gap-2 caption text-muted-foreground hover:text-foreground h-auto shrink-0"
-            >
-                <Copy className="w-3.5 h-3.5" />
-                COPY ALL
-            </Button>
-        </div>
+                <Button
+                    variant="ghost"
+                    onClick={onCopyAll}
+                    className="flex items-center gap-2 label text-ink-700 hover:text-ink-1000 h-auto shrink-0 px-3 py-1.5"
+                >
+                    <Copy className="w-3.5 h-3.5" />
+                    COPY ALL
+                </Button>
+
+            </div>
+            <Separator className="bg-ink-200 mt-4" />
+        </>
     );
 }

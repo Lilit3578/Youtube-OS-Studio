@@ -131,6 +131,32 @@
     font-weight: 400;
   }
 
+  /* caption: 12/150 - Regular */
+  .caption {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    font-weight: 400;
+  }
+
+  /* h2-italic: 20/140 - Instrument Serif Italic */
+  .h2-italic {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  /* body-strong: 14/170 - Medium */
+  .body-strong {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+    font-weight: 500;
+  }
+
+
   /* Serif font rendering optimization */
   .font-serif {
     font-feature-settings: "kern" 1, "liga" 1;

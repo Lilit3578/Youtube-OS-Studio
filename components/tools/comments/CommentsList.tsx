@@ -13,7 +13,7 @@ interface CommentsListProps {
 export default function CommentsList({ comments, loading, hasSearched }: CommentsListProps) {
     if (loading) {
         return (
-            <div className="py-12 text-center text-neutral-400 text-sm animate-pulse">
+            <div className="py-12 text-center text-ink-700 body animate-pulse">
                 Fetching comments from YouTube...
             </div>
         );
@@ -21,7 +21,7 @@ export default function CommentsList({ comments, loading, hasSearched }: Comment
 
     if (comments.length === 0 && hasSearched) {
         return (
-            <div className="py-12 text-center text-neutral-400 text-sm">
+            <div className="py-12 text-center text-ink-700 body">
                 No comments found matching the criteria.
             </div>
         );

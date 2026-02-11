@@ -13,10 +13,10 @@ interface UrlInputSectionProps {
 
 export default function UrlInputSection({ url, onChange, disabled }: UrlInputSectionProps) {
     return (
-        <div className="flex flex-col gap-3">
-            <Label htmlFor="youtube-url" className="text-sm font-medium text-neutral-900">
+        <div className="flex flex-col gap-[10px]">
+            <p className="body-strong text-ink-1000">
                 youtube url
-            </Label>
+            </p>
             <Input
                 id="youtube-url"
                 type="text"
@@ -24,9 +24,8 @@ export default function UrlInputSection({ url, onChange, disabled }: UrlInputSec
                 value={url}
                 onChange={onChange}
                 disabled={disabled}
-                className="w-full bg-white border-neutral-200 focus:ring-1 focus:ring-black"
+                className="w-full bg-ink-0 border-ink-300 focus:ring-1 focus:ring-system-primary body px-4 py-2 rounded-lg"
             />
-            <Separator className="bg-neutral-200/50" />
         </div>
     );
 }

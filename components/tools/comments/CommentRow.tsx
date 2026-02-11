@@ -24,21 +24,25 @@ export default function CommentRow({ comment }: CommentRowProps) {
 
     return (
         <div className="flex items-start justify-between py-6 border-b border-ink-200 last:border-0 group">
-            <div className="flex-1 pr-8">
-                <p className="body text-foreground leading-relaxed whitespace-pre-wrap">
-                    {comment.text}
-                </p>
-            </div>
+            <p className="flex-1 pr-8 body text-ink-1000 leading-relaxed whitespace-pre-wrap">
+                {comment.text}
+            </p>
 
             <div className="flex items-center gap-6 shrink-0">
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="flex items-center gap-2 text-ink-700">
                     <ThumbsUp className="w-4 h-4" strokeWidth={1.5} />
-                    <span className="caption min-w-[20px]">
+                    <span className="caption min-w-[20px] text-ink-700">
                         {compactFormatter.format(comment.likeCount)}
                     </span>
                 </div>
 
-                <Button variant="ghost" size="icon" onClick={handleCopy} aria-label="Copy comment" className="h-8 w-8 text-ink-500 hover:text-foreground opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleCopy}
+                    aria-label="Copy comment"
+                    className="h-8 w-8 text-ink-500 hover:text-ink-1000 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                >
                     <Copy className="w-4 h-4" />
                 </Button>
             </div>

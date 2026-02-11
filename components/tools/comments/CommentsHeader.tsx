@@ -13,42 +13,42 @@ interface CommentsHeaderProps {
 
 export default function CommentsHeader({ onDownloadConfig, hasComments }: CommentsHeaderProps) {
     return (
-        <div className="grid items-center mt-8 mb-4 gap-4">
-            <div className="flex items-center justify-between">
-                <h2 className="text-[32px] leading-[36px] font-serif font-normal text-foreground">
+        <>
+            <div className="flex items-center justify-between mt-8 mb-4">
+                <h2 className="h2-italic text-ink-1000">
                     comments
                 </h2>
 
                 {hasComments && (
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="default" className="normal-case">
-                                download
+                            <Button variant="default" className="label cursor-pointer bg-ink-1000 text-ink-0 px-6 py-3 rounded-full h-10">
+                                DOWNLOAD
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent
                             align="end"
                             sideOffset={6}
-                            className="w-[180px] p-2 bg-popover rounded-xl shadow-lg border border-ink-200"
+                            className="w-[180px] p-2 bg-ink-0 rounded-xl shadow-lg border border-ink-300"
                         >
                             <div className="flex flex-col gap-1">
                                 {/* CSV */}
                                 <Button
                                     variant="ghost"
                                     onClick={() => onDownloadConfig("csv")}
-                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto"
+                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-ink-200 cursor-pointer"
                                 >
-                                    <span className="body text-foreground">
+                                    <span className="body text-ink-1000">
                                         csv
                                     </span>
-                                    <FileText className="w-5 h-5 text-foreground" strokeWidth={1.5} />
+                                    <FileText className="w-5 h-5 text-ink-1000" strokeWidth={1.5} />
                                 </Button>
 
                                 {/* Excel */}
                                 <Button
                                     variant="ghost"
                                     onClick={() => onDownloadConfig("excel")}
-                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
+                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-ink-200 cursor-pointer"
                                 >
                                     <span className="body text-ink-1000">
                                         excel
@@ -60,7 +60,7 @@ export default function CommentsHeader({ onDownloadConfig, hasComments }: Commen
                     </Popover>
                 )}
             </div>
-            <Separator className="bg-border opacity-50" />
-        </div>
+            <Separator className="bg-ink-200 opacity-50 mb-4" />
+        </>
     );
 }
