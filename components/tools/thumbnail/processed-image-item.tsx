@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/popover";
 
 interface ProcessedImageItemProps {
-    originalFile: File;
+    originalFile: File; // The truly original uploaded file
+    processedFile: File; // The processed/cropped file
     processedBlob: Blob | null;
     status: "processing" | "done" | "error";
     errorMsg?: string;
@@ -21,6 +22,7 @@ interface ProcessedImageItemProps {
 
 export default function ProcessedImageItem({
     originalFile,
+    processedFile,
     processedBlob,
     status,
     errorMsg,
@@ -31,12 +33,14 @@ export default function ProcessedImageItem({
     const [processedUrl, setProcessedUrl] = React.useState<string | null>(null);
     const [isComparing, setIsComparing] = React.useState(false);
 
+    // Create URL for the truly original file (before any processing)
     React.useEffect(() => {
         const url = URL.createObjectURL(originalFile);
         setOriginalUrl(url);
         return () => URL.revokeObjectURL(url);
     }, [originalFile]);
 
+    // Create URL for the processed/compressed blob
     React.useEffect(() => {
         if (processedBlob) {
             const url = URL.createObjectURL(processedBlob);
@@ -47,7 +51,7 @@ export default function ProcessedImageItem({
     }, [processedBlob]);
 
     // Active URL based on state
-    // If comparing -> show original
+    // If comparing -> show truly original (before crop/processing)
     // If not comparing and we have processed version -> show processed
     // Fallback -> show original (e.g. while processing)
     const activeUrl = isComparing ? originalUrl : (processedUrl || originalUrl);
@@ -56,7 +60,7 @@ export default function ProcessedImageItem({
     const stats = useMemo(() => {
         if (!processedBlob || status !== "done") return null;
 
-        const orig = originalFile.size;
+        const orig = processedFile.size;
         const comp = processedBlob.size;
         const savingsBytes = orig - comp;
         const savingsPercent = Math.round((savingsBytes / orig) * 100);
@@ -67,13 +71,13 @@ export default function ProcessedImageItem({
             percent: savingsPercent > 0 ? `-${savingsPercent}% Compression` : `+${Math.abs(savingsPercent)}% Size Increase`,
             isSavings: savingsPercent > 0
         };
-    }, [originalFile, processedBlob, status]);
+    }, [processedFile, processedBlob, status]);
 
     // 3. Download Handler
     const handleDownload = (format: "png" | "jpg") => {
         if (!processedBlob) return;
 
-        const nameWithoutExt = originalFile.name.substring(0, originalFile.name.lastIndexOf(".")) || originalFile.name;
+        const nameWithoutExt = processedFile.name.substring(0, processedFile.name.lastIndexOf(".")) || processedFile.name;
         const extension = format === "png" ? ".png" : ".jpg";
         const fullFilename = `${nameWithoutExt}-optimized${extension}`;
 
@@ -88,28 +92,48 @@ export default function ProcessedImageItem({
     };
 
     return (
-        <Card className="flex flex-row items-start gap-8 p-0 border-0 shadow-none bg-transparent w-full">
+        <div className="flex flex-row items-start gap-[16px] w-full">
             {/* Image Container with Compare Interaction */}
             <div
                 className={cn(
-                    "w-[335px] aspect-video bg-white border border-neutral-200 rounded-xl flex flex-col justify-center items-center overflow-hidden relative select-none cursor-pointer",
-                    status === "error" && "opacity-50"
+                    "w-[248px] h-[140px] bg-ink-0 border-2 border-solid rounded-[8px] flex flex-col justify-center items-center overflow-hidden relative select-none cursor-pointer transition-all duration-200",
+                    status === "error" && "opacity-50",
+                    isComparing ? "border-primary" : "border-ink-300"
                 )}
-                onMouseDown={() => status === "done" && setIsComparing(true)}
-                onMouseUp={() => setIsComparing(false)}
-                onMouseLeave={() => setIsComparing(false)}
-                onTouchStart={() => status === "done" && setIsComparing(true)}
-                onTouchEnd={() => setIsComparing(false)}
+                onMouseDown={(e) => {
+                    e.preventDefault();
+                    if (status === "done") setIsComparing(true);
+                }}
+                onMouseUp={(e) => {
+                    e.preventDefault();
+                    setIsComparing(false);
+                }}
+                onMouseLeave={(e) => {
+                    e.preventDefault();
+                    setIsComparing(false);
+                }}
+                onTouchStart={(e) => {
+                    e.preventDefault();
+                    if (status === "done") setIsComparing(true);
+                }}
+                onTouchEnd={(e) => {
+                    e.preventDefault();
+                    setIsComparing(false);
+                }}
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {activeUrl && (
                     <img
+                        key={isComparing ? 'original' : 'processed'}
                         src={activeUrl}
-                        alt={originalFile.name}
+                        alt={processedFile.name}
                         className={cn(
-                            "w-full h-full object-cover",
+                            "w-full h-full transition-opacity duration-200",
+                            // Use object-contain for original to show full image, object-cover for processed to fill frame
+                            isComparing ? "object-contain" : "object-cover",
                             status === "error" && "grayscale"
                         )}
+                        draggable={false}
                     />
                 )}
 
@@ -127,8 +151,8 @@ export default function ProcessedImageItem({
                 <div className="flex flex-col gap-1.5">
                     {/* Title Row with Download Button */}
                     <div className="w-full flex items-center justify-between gap-2">
-                        <div className="body font-medium text-neutral-950 leading-relaxed break-all flex items-center gap-2">
-                            {originalFile.name}
+                        <div className="body-strong text-foreground break-all flex items-center gap-2">
+                            {processedFile.name}
 
                             {/* Resolution Warning Badge */}
                             {hasResolutionWarning && status === "done" && (
@@ -146,24 +170,23 @@ export default function ProcessedImageItem({
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-auto px-0 hover:bg-transparent flex items-center gap-2 cursor-pointer transition-colors"
+                                        className="h-auto px-0 hover:bg-transparent flex items-center gap-2 cursor-pointer transition-colors !normal-case"
                                     >
-                                        <div className="body text-neutral-950 leading-relaxed">
+                                        <p className="body text-foreground">
                                             download
-                                        </div>
-                                        <Download size={20} weight="regular" className="text-neutral-950" />
+                                        </p>
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent
                                     align="end"
                                     sideOffset={6}
                                     className="
-                                        w-[180px]
-                                        p-2
-                                        bg-white
-                                        rounded-xl
+                                        w-[160px]
+                                        p-[8px]
+                                        bg-popover
+                                        rounded-[12px]
                                         shadow-lg
-                                        border border-black/5
+                                        border border-ink-300
                                     "
                                 >
                                     <div className="flex flex-col gap-1">
@@ -171,16 +194,16 @@ export default function ProcessedImageItem({
                                         <Button
                                             variant="ghost"
                                             onClick={() => handleDownload("png")}
-                                            className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
+                                            className="flex items-center justify-between w-full px-[10px] py-[6px] rounded-[8px] h-auto cursor-pointer"
                                         >
-                                            <span className="body text-neutral-950 leading-relaxed">
+                                            <span className="body text-foreground">
                                                 png
                                             </span>
 
                                             <FileImage
                                                 size={20}
                                                 weight="regular"
-                                                className="text-neutral-950"
+                                                className="text-foreground"
                                             />
                                         </Button>
 
@@ -188,16 +211,16 @@ export default function ProcessedImageItem({
                                         <Button
                                             variant="ghost"
                                             onClick={() => handleDownload("jpg")}
-                                            className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
+                                            className="flex items-center justify-between w-full px-[10px] py-[6px] rounded-[8px] h-auto cursor-pointer"
                                         >
-                                            <span className="body text-neutral-950 leading-relaxed">
+                                            <span className="body text-foreground">
                                                 jpeg
                                             </span>
 
                                             <FileText
                                                 size={20}
                                                 weight="regular"
-                                                className="text-neutral-950"
+                                                className="text-foreground"
                                             />
                                         </Button>
                                     </div>
@@ -212,22 +235,22 @@ export default function ProcessedImageItem({
                     {/* Compression Stats and File Size Row */}
                     {status === "done" && stats ? (
                         <div className="flex items-center gap-3">
-                            <span className="body text-neutral-400 leading-relaxed">
+                            <span className="body text-muted-foreground">
                                 {stats.percent.toLowerCase()}
                             </span>
-                            <div className="w-px h-3 bg-neutral-200" />
-                            <span className="body text-neutral-400 leading-relaxed">
+                            <div className="w-px h-3 bg-border" />
+                            <span className="body text-muted-foreground">
                                 file size {formatBytes(processedBlob?.size || 0).toLowerCase()}
                             </span>
                         </div>
                     ) : status === "error" ? (
                         <div className="flex items-center gap-3">
-                            <span className="body font-medium text-[#C03535] leading-relaxed">error</span>
-                            <div className="w-px h-3 bg-neutral-200" />
-                            <span className="body text-[#C03535] leading-relaxed opacity-80">{errorMsg}</span>
+                            <span className="body font-medium text-destructive">error</span>
+                            <div className="w-px h-3 bg-border" />
+                            <span className="body text-destructive opacity-80">{errorMsg}</span>
                         </div>
                     ) : (
-                        <div className="body text-neutral-400 italic">Optimizing...</div>
+                        <div className="body text-muted-foreground italic">Optimizing...</div>
                     )}
                 </div>
 
@@ -238,6 +261,6 @@ export default function ProcessedImageItem({
                     </div>
                 )}
             </div>
-        </Card>
+        </div>
     );
 }

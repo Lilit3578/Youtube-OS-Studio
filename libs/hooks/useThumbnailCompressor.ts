@@ -5,7 +5,8 @@ import { ERROR_MESSAGES } from "@/libs/constants/messages";
 
 export interface ProcessedImageItemDetails {
     id: string;
-    file: File;
+    file: File; // The processed/cropped file
+    originalFile: File; // The truly original uploaded file (before any processing)
     blob: Blob | null;
     status: "processing" | "done" | "error";
     errorMsg?: string;
@@ -86,6 +87,7 @@ export function useThumbnailCompressor() {
                     return {
                         id,
                         file,
+                        originalFile: file, // Store original
                         blob: null,
                         status: "error",
                         errorMsg: validationError
@@ -97,7 +99,8 @@ export function useThumbnailCompressor() {
 
                 return {
                     id,
-                    file,
+                    file, // This will be updated with processed file later
+                    originalFile: file, // Store the truly original file
                     blob: null,
                     status: "processing",
                 };
@@ -124,13 +127,17 @@ export function useThumbnailCompressor() {
                     prev.map((item) => {
                         if (item.id !== id) return item;
 
+                        // Create a File from the compressed blob to store as the processed file
+                        const processedFile = new File([compressedBlob], file.name, { type: compressedBlob.type });
+
                         // Calculate basic compression ratio just for state (optional, can be done in UI)
-                        const orig = item.file.size;
+                        const orig = file.size; // Use original file size
                         const comp = compressedBlob.size;
                         const ratio = ((orig - comp) / orig); // Store as decimal (e.g. 0.66)
 
                         return {
                             ...item,
+                            file: processedFile, // Store the processed/cropped file
                             status: "done",
                             blob: compressedBlob,
                             compressionRatio: ratio,

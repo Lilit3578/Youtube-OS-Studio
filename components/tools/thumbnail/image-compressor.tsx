@@ -118,27 +118,27 @@ export default function ImageCompressor() {
         <div className="flex flex-col gap-6 w-full">
 
             {/* Upload Zone */}
-            <Card
+            <div
                 className={cn(
-                    "w-full h-[200px] bg-ink-100 border border-dotted border-ink-400 rounded-xl flex flex-col justify-center items-center gap-4 transition-colors duration-200 cursor-pointer hover:bg-ink-200",
-                    isDragging ? "border-primary bg-ink-200" : ""
+                    "w-full bg-ink-200 border border-ink-300 border-dashed rounded-[8px] flex flex-col justify-center items-center gap-[16px] p-[40px] transition-colors duration-200 cursor-pointer hover:bg-ink-300",
+                    isDragging ? "border-primary bg-ink-300" : ""
                 )}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => document.getElementById("thumbnail-upload-input")?.click()}
             >
-                <div className="p-2.5 bg-ink-200 rounded-lg">
-                    <FileImage size={24} weight="regular" className="text-foreground" />
+                <div className="relative shrink-0 size-[20px]">
+                    <FileImage size={20} weight="regular" className="text-foreground" />
                 </div>
 
-                <div className="flex flex-col items-center justify-start gap-1">
-                    <div className="body text-center text-foreground leading-relaxed">
+                <div className="flex flex-col items-center gap-[8px]">
+                    <p className="body text-center text-foreground">
                         upload / drag images (png, jpeg)
-                    </div>
-                    <div className="body text-center text-muted-foreground leading-relaxed">
+                    </p>
+                    <p className="body text-center text-muted-foreground">
                         max {formatBytes(THUMBNAIL_CONFIG.UPLOAD_MAX_SIZE_BYTES)} size
-                    </div>
+                    </p>
                 </div>
 
                 <input
@@ -149,27 +149,27 @@ export default function ImageCompressor() {
                     onChange={handleInputChange}
                     multiple
                 />
-            </Card>
+            </div>
 
             {/* Status Separator */}
             {items.length > 0 && <Separator className="bg-border opacity-50" />}
 
             {/* Results Section */}
             {items.length > 0 && (
-                <div className="w-full flex justify-between items-center mt-4">
-                    <div className="text-center text-foreground text-[20px] font-serif font-normal leading-[28px] break-words">
+                <div className="w-full flex justify-between items-center">
+                    <p className="h2-italic text-foreground">
                         results ({items.length})
-                    </div>
+                    </p>
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-auto px-0 hover:bg-transparent rounded-lg flex items-center gap-2 cursor-pointer transition-colors"
+                                className="h-auto px-0 hover:bg-transparent rounded-lg flex items-center gap-[8px] cursor-pointer transition-colors !normal-case"
                             >
-                                <div className="body text-center text-foreground leading-relaxed break-words">
+                                <p className="body text-foreground">
                                     download all
-                                </div>
+                                </p>
                                 <Download size={20} weight="regular" className="text-foreground" />
                             </Button>
 
@@ -178,12 +178,12 @@ export default function ImageCompressor() {
                             align="end"
                             sideOffset={6}
                             className="
-                                w-[180px]
-                                p-2
+                                w-[160px]
+                                p-[8px]
                                 bg-popover
-                                rounded-xl
+                                rounded-[12px]
                                 shadow-lg
-                                border border-ink-200
+                                border border-ink-300
                             "
                         >
                             <div className="flex flex-col gap-1">
@@ -191,9 +191,9 @@ export default function ImageCompressor() {
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleDownloadAll("png")}
-                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto"
+                                    className="flex items-center justify-between w-full px-[10px] py-[6px] rounded-[8px] h-auto cursor-pointer"
                                 >
-                                    <span className="body text-foreground leading-relaxed">
+                                    <span className="body text-foreground">
                                         png
                                     </span>
 
@@ -204,13 +204,13 @@ export default function ImageCompressor() {
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleDownloadAll("jpg")}
-                                    className="flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg h-auto hover:bg-black/5"
+                                    className="flex items-center justify-between w-full px-[10px] py-[6px] rounded-[8px] h-auto cursor-pointer"
                                 >
-                                    <span className="body text-neutral-950 leading-relaxed">
+                                    <span className="body text-foreground">
                                         jpeg
                                     </span>
 
-                                    <FileText size={20} weight="regular" className="text-neutral-950" />
+                                    <FileText size={20} weight="regular" className="text-foreground" />
                                 </Button>
                             </div>
                         </PopoverContent>
@@ -220,7 +220,7 @@ export default function ImageCompressor() {
                 </div>
             )}
 
-            <div className="w-full h-px bg-border" />
+            <Separator className="bg-border" />
 
             {/* Processed Images List (Inlined) */}
             <div className="w-full flex flex-col gap-8">
@@ -228,7 +228,8 @@ export default function ImageCompressor() {
                     <React.Fragment key={item.id}>
                         {index > 0 && <div className="w-full h-px bg-border" />}
                         <ProcessedImageItem
-                            originalFile={item.file}
+                            originalFile={item.originalFile}
+                            processedFile={item.file}
                             processedBlob={item.blob}
                             status={item.status}
                             errorMsg={item.errorMsg}
