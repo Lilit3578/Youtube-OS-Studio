@@ -27,7 +27,7 @@ const ButtonAccount = () => {
 						<img
 							src={session?.user?.image}
 							alt={session?.user?.name || "Account"}
-							className="h-8 w-8 rounded-full shrink-0"
+							className="h-5 w-5 rounded-full shrink-0"
 							referrerPolicy="no-referrer"
 							width={32}
 							height={32}

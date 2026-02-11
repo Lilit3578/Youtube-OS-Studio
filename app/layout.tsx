@@ -9,19 +9,23 @@ import "./globals.css";
 
 const instrumentSerif = Instrument_Serif({
 	weight: ["400"],
+	style: ["normal", "italic"],
 	subsets: ["latin"],
 	variable: "--font-instrument-serif",
+	display: "swap",
 });
 
 const beVietnamPro = Be_Vietnam_Pro({
 	weight: ["300", "400", "500", "600"],
 	subsets: ["latin"],
-	variable: "--font-be-vietnam-pro"
+	variable: "--font-be-vietnam-pro",
+	display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
 	subsets: ["latin"],
-	variable: "--font-jetbrains-mono"
+	variable: "--font-jetbrains-mono",
+	display: "swap",
 });
 
 export const viewport: Viewport = {

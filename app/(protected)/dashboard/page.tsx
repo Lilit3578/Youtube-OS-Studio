@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { toolsConfig } from "@/config";
-import config from "@/config";
+import config, { toolsConfig } from "@/config";
 import { cn } from "@/libs/utils";
 import { getSEOTags } from "@/libs/seo";
-import { FileSearch, MessageSquare, Image, QrCode, ArrowRight } from "lucide-react";
+import { FileSearch, MessageSquare, Image as ImageIcon, QrCode, ArrowRight, type LucideIcon } from "lucide-react";
 
 export const metadata = getSEOTags({
   title: `Dashboard | ${config.appName}`,
@@ -14,15 +13,15 @@ export const metadata = getSEOTags({
 });
 
 // Icon mapping for tools
-const toolIcons = {
+const toolIcons: Record<string, LucideIcon> = {
   metadata: FileSearch,
   comments: MessageSquare,
-  thumbnail: Image,
+  thumbnail: ImageIcon,
   qr: QrCode,
 };
 
 // Tool descriptions
-const toolDescriptions = {
+const toolDescriptions: Record<string, string> = {
   metadata: "Inspect video tags and hidden metadata.",
   comments: "Explore and export video comments.",
   thumbnail: "Resize and compress thumbnails to YouTube standards.",

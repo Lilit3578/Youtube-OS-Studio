@@ -63,9 +63,10 @@
   :root,
   .dark {
     font-family: var(--font-sans);
-    --font-serif: var(--font-instrument-serif);
-    --font-sans: var(--font-be-vietnam-pro);
-    --font-mono: var(--font-jetbrains-mono);
+    /* Font rendering improvements */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   .dark {
@@ -129,6 +130,12 @@
     line-height: 1.5rem;
     font-weight: 400;
   }
+
+  /* Serif font rendering optimization */
+  .font-serif {
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
 }
 
 :root {
@@ -153,7 +160,7 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
-@theme inline {
+@theme {
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
