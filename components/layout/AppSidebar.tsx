@@ -36,11 +36,11 @@ export function AppSidebar() {
     // Map tool IDs to Lucide icons
     const getToolIcon = (id: string) => {
         switch (id) {
-            case "metadata": return <Monitor/>;
-            case "comments": return <MessageSquare/>;
-            case "thumbnail": return <ImageIcon/>;
-            case "qr": return <QrCode/>;
-            default: return <Sparkles/>;
+            case "metadata": return <Monitor />;
+            case "comments": return <MessageSquare />;
+            case "thumbnail": return <ImageIcon />;
+            case "qr": return <QrCode />;
+            default: return <Sparkles />;
         }
     };
 
@@ -52,8 +52,8 @@ export function AppSidebar() {
                 <SidebarHeader className="group-data-[collapsible=icon]:justify-center">
                     <div className="flex items-center justify-between w-full">
                         {!isCollapsed && (
-                        <div className="h2"><span className="italic">youtube </span>OS
-                        </div>
+                            <div className="h2"><span className="italic">youtube </span>OS
+                            </div>
                         )}
                         {!isCollapsed && <SidebarTrigger />}
                         {isCollapsed && (
@@ -73,7 +73,7 @@ export function AppSidebar() {
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
                                     <a href="/dashboard">
-                                        <Home/><div>home</div>
+                                        <Home /><div>home</div>
                                     </a>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
@@ -152,19 +152,19 @@ export function AppSidebar() {
 
                 <SidebarFooter>
                     {/* User & Settings */}
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/dashboard/settings"}>
-                                    <Link href="/dashboard/settings">
-                                        <Settings />
-                                        <div>settings</div>
-                                    </Link>
-                                </SidebarMenuButton>
-                                <SidebarMenuItem className="flex justify-center">
-                                    <ButtonAccount />
-                                </SidebarMenuItem>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild isActive={pathname === "/dashboard/settings"}>
+                                <Link href="/dashboard/settings">
+                                    <Settings />
+                                    <div>settings</div>
+                                </Link>
+                            </SidebarMenuButton>
+                            <SidebarMenuItem className="flex justify-center">
+                                <ButtonAccount />
                             </SidebarMenuItem>
-                        </SidebarMenu>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
                 </SidebarFooter>
             </Sidebar>
 

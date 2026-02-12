@@ -106,18 +106,21 @@ export async function POST(req: Request) {
         );
 
         // Get user and check limit (avoiding nested field query issues)
-        console.log("[DEBUG] Finding user:", session.user.email);
+        // console.log("[DEBUG] Finding user:", session.user.email); // CRIT-02: Removed PII log
 
+        // Optimization: Use findOneAndUpdate to atomically check and increment if possible,
+        // but for complex quota logic with resets, we need a robust approach.
+        // We will stick to the current logic but ENSURE atomic increments later.
         const user = await User.findOne({ email: session.user.email });
 
         if (!user) {
-            console.log("[DEBUG] User not found");
+            // console.log("[DEBUG] User not found");
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        console.log("[DEBUG] User found, checking usage");
-        console.log("[DEBUG] Current count:", user.usage?.commentExplorer?.count);
-        console.log("[DEBUG] Limit:", DAILY_LIMIT);
+        // console.log("[DEBUG] User found, checking usage");
+        // console.log("[DEBUG] Current count:", user.usage?.commentExplorer?.count);
+        // console.log("[DEBUG] Limit:", DAILY_LIMIT);
 
         // Check if usage fields exist, if not initialize them
         if (!user.usage || !user.usage.commentExplorer) {
@@ -130,7 +133,7 @@ export async function POST(req: Request) {
             await user.save();
         }
 
-        // Check if under limit
+        // Double check just for early return, though the atomic update is the real guard
         if (user.usage.commentExplorer.count >= DAILY_LIMIT) {
             console.log("[DEBUG] Limit reached");
             return NextResponse.json(
@@ -142,11 +145,41 @@ export async function POST(req: Request) {
             );
         }
 
-        // Increment counter
-        console.log("[DEBUG] Incrementing counter");
-        user.usage.commentExplorer.count += 1;
-        await user.save();
-        console.log("[DEBUG] Counter incremented to:", user.usage.commentExplorer.count);
+        // Atomic Increment with Condition (CRIT-01 Fix)
+        // We use findOneAndUpdate to ensure we only increment IF the key is still under the limit.
+        // This prevents the "check-then-act" race condition.
+        const updatedUser = await User.findOneAndUpdate(
+            {
+                email: session.user.email,
+                "usage.commentExplorer.count": { $lt: DAILY_LIMIT }
+            },
+            {
+                $inc: { "usage.commentExplorer.count": 1 }
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            // If the update returned null, it means the condition (count < limit) failed
+            // double check if it was due to limit or user missing
+            const checkUser = await User.findOne({ email: session.user.email });
+            if (checkUser && checkUser.usage?.commentExplorer?.count >= DAILY_LIMIT) {
+                return NextResponse.json(
+                    {
+                        error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
+                        errorKey: "QUOTA_EXCEEDED",
+                    },
+                    { status: 429 }
+                );
+            }
+            // Fallback for other failures
+            return NextResponse.json({ error: "User not found or update failed" }, { status: 500 });
+        }
+
+        // console.log("[DEBUG] Incrementing counter");
+        // user.usage.commentExplorer.count += 1;
+        // await user.save();
+        // console.log("[DEBUG] Counter incremented to:", user.usage.commentExplorer.count);
 
         // Fetch comments
         const comments = await fetchComments(videoId);

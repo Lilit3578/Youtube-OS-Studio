@@ -1,4 +1,5 @@
 import { ConfigProps } from "./types/config";
+import "./libs/env"; // MED-01 Fix: Run env validation on import
 
 // DaisyUI v5 no longer exports themes directly, using fallback color
 const themes = {

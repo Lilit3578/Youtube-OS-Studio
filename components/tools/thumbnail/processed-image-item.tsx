@@ -28,33 +28,35 @@ export default function ProcessedImageItem({
     errorMsg,
     hasResolutionWarning
 }: ProcessedImageItemProps) {
-    // 1. Manage Object URLs
-    const [originalUrl, setOriginalUrl] = React.useState<string | null>(null);
-    const [processedUrl, setProcessedUrl] = React.useState<string | null>(null);
+    // 1. Manage State
     const [isComparing, setIsComparing] = React.useState(false);
 
-    // Create URL for the truly original file (before any processing)
-    React.useEffect(() => {
-        const url = URL.createObjectURL(originalFile);
-        setOriginalUrl(url);
-        return () => URL.revokeObjectURL(url);
-    }, [originalFile]);
+    // Active URL based on state (HIGH-02 Fix: Consolidated URL logic)
+    const [activeUrl, setActiveUrl] = React.useState<string | null>(null);
 
-    // Create URL for the processed/compressed blob
+    // Single Effect to manage the Display URL
+    // This prevents multiple URL creations and ensures strict cleanup
     React.useEffect(() => {
-        if (processedBlob) {
-            const url = URL.createObjectURL(processedBlob);
-            setProcessedUrl(url);
-            return () => URL.revokeObjectURL(url);
+        let url: string | null = null;
+
+        if (isComparing) {
+            // Show Original
+            url = URL.createObjectURL(originalFile);
+        } else if (processedBlob && status === "done") {
+            // Show Processed
+            url = URL.createObjectURL(processedBlob);
+        } else {
+            // Fallback to Original (e.g. processing)
+            url = URL.createObjectURL(originalFile);
         }
-        setProcessedUrl(null);
-    }, [processedBlob]);
 
-    // Active URL based on state
-    // If comparing -> show truly original (before crop/processing)
-    // If not comparing and we have processed version -> show processed
-    // Fallback -> show original (e.g. while processing)
-    const activeUrl = isComparing ? originalUrl : (processedUrl || originalUrl);
+        setActiveUrl(url);
+
+        // Strict Cleanup
+        return () => {
+            if (url) URL.revokeObjectURL(url);
+        };
+    }, [originalFile, processedBlob, status, isComparing]);
 
     // 2. Real math calculation
     const stats = useMemo(() => {

@@ -20,6 +20,7 @@ export async function processImage(
         const url = URL.createObjectURL(file);
 
         img.onload = () => {
+            // HIGH-01 Fix: Revoke immediately
             URL.revokeObjectURL(url);
 
             const originalWidth = img.width;
@@ -62,11 +63,12 @@ export async function processImage(
             ctx.imageSmoothingQuality = "high";
             ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 
+
             // Convert back to File
             // CRITICAL: Output as PNG to prevent "Generation Loss" (Double JPEG artifacting)
             // The browser-image-compression library will handle the final JPEG encoding.
             canvas.toBlob(
-                (blob) => {
+                (blob: Blob | null) => {
                     if (blob) {
                         const processedFile = new File([blob], file.name, {
                             type: "image/png",
@@ -82,6 +84,7 @@ export async function processImage(
         };
 
         img.onerror = (error) => {
+            // HIGH-01 Fix: Revoke on error too
             URL.revokeObjectURL(url);
             reject(error);
         };

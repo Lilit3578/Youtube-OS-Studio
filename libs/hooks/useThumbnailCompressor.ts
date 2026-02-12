@@ -157,18 +157,28 @@ export function useThumbnailCompressor() {
             }
         });
 
-        // Execute with concurrency limit
-        for (const task of tasks) {
-            const p = task().then(() => {
-                executing.splice(executing.indexOf(p), 1);
-            });
-            executing.push(p);
-            if (executing.length >= CONCURRENCY_LIMIT) {
-                await Promise.race(executing);
+        // Safe Concurrency Execution using p-limit pattern (HIGH-03 Fix)
+        // Replaced the manual `while` loop which was prone to race conditions/stalls
+        const runTask = async (task: () => Promise<void>) => {
+            try {
+                await task();
+            } catch (e) {
+                console.error("Task execution failed unexpectedly", e);
             }
-        }
+        };
 
-        await Promise.all(executing);
+        // Simple batching to limit concurrency to 3
+        let index = 0;
+        const next = async (): Promise<void> => {
+            if (index >= tasks.length) return;
+            const task = tasks[index++];
+            await runTask(task);
+            await next();
+        };
+
+        const workers = Array.from({ length: Math.min(CONCURRENCY_LIMIT, tasks.length) }, () => next());
+        await Promise.all(workers);
+
         setIsCompressing(false);
     }, []);
 

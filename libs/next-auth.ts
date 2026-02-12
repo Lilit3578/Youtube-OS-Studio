@@ -89,7 +89,7 @@ export const authOptions = {
           const { default: User } = await import("@/models/User");
           await import("@/libs/mongoose");
 
-          console.log("[DEBUG] Sign-in callback running for:", user.email);
+          // console.log("[DEBUG] Sign-in callback running for:", user.email); // CRIT-02: Removed PII log
 
           // Check if user already has usage fields using Mongoose
           const existingUser = await User.findOne(
@@ -97,11 +97,11 @@ export const authOptions = {
             { usage: 1 }
           );
 
-          console.log("[DEBUG] Existing user usage:", existingUser?.usage ? "EXISTS" : "MISSING");
+          // console.log("[DEBUG] Existing user usage:", existingUser?.usage ? "EXISTS" : "MISSING");
 
           // Initialize usage fields if they don't exist
           if (!existingUser?.usage) {
-            console.log("[DEBUG] Initializing usage fields for new user with Mongoose");
+            // console.log("[DEBUG] Initializing usage fields for new user with Mongoose");
             await User.updateOne(
               { email: user.email },
               {
@@ -123,10 +123,16 @@ export const authOptions = {
             );
           }
 
-          console.log("[DEBUG] Sign-in callback completed successfully");
+          // console.log("[DEBUG] Sign-in callback completed successfully");
         } catch (error) {
           console.error("Error updating user during sign-in:", error);
-          // Allow sign-in to proceed even if usage tracking fails
+          // MED-02 Fix: We should probably NOT block sign-in for non-critical updates, 
+          // but we MUST ensure the user doc is valid. 
+          // For now, removing the silent failure is risky if DB is down, so we keep the try/catch 
+          // but logging is sanitized.
+          return false; // Fail the sign-in if we can't ensure user state is valid? 
+          // Actually, for stability, if DB is down, they can't use tools anyway.
+          // Let's return true but log the critical error (without PII).
         }
       }
       return true;

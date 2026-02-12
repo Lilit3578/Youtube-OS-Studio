@@ -31,8 +31,16 @@ if (!uri) {
   }
   clientPromise = global._mongoClientPromise;
 } else {
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+  // In production mode, it's best to not use a global variable.
+  // HOWEVER, to prevent connection leaks common in serverless/lambda environments (like Vercel),
+  // we SHOULD cache the promise in the global scope if possible, or ensure client reuse.
+  // The previous implementation created a NEW client on every import, which is CRIT-03.
+
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(uri, options);
+    global._mongoClientPromise = client.connect();
+  }
+  clientPromise = global._mongoClientPromise;
 }
 
 export default clientPromise;

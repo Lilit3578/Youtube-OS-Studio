@@ -90,10 +90,21 @@ export default function CommentExplorerPage() {
                 feedback: resTypes.counts.feedback,
                 other: resTypes.counts.other
             });
+        } catch (err) {
+            // HIGH-04 Fix: Robust error handling
+            // If component unmounts, state updates will warn/fail, but at least we catch specific errors
+            console.error("Failed to fetch comments:", err);
 
-        } catch {
-            setError(ERROR_MESSAGES.GLOBAL.NETWORK_ERROR);
+            if (err instanceof SyntaxError) {
+                setError("Received invalid response from server");
+            } else if (err instanceof TypeError) {
+                // Network errors often appear as TypeErrors in fetch
+                setError(ERROR_MESSAGES.GLOBAL.NETWORK_ERROR);
+            } else {
+                setError(ERROR_MESSAGES.TOOLS.COMMENTS.GENERIC_FAIL);
+            }
         } finally {
+            // Always reset loading state
             loadingRef.current = false;
             setLoading(false);
         }

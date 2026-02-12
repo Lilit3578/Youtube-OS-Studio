@@ -39,6 +39,7 @@
     "qr-code-styling": "^1.9.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-error-boundary": "^6.1.0",
     "react-hot-toast": "^2.4.1",
     "react-tooltip": "^5.26.3",
     "resend": "^6.0.0",
