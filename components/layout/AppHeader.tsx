@@ -33,26 +33,22 @@ const AppHeader = () => {
 
     return (
         <>
-            <div className="w-full flex items-center justify-between bg-transparent px-[40px] py-[16px]">
-                <div className="flex items-center gap-4">
-                    <div className="text-xl font-serif italic text-ink-1000">
+            <div className="w-full flex items-center justify-between bg-transparent px-10 py-3.5 border-b border-ink-200">
+                    <div className="h2 italic">
                         {getPageTitle()}
                     </div>
-                </div>
 
                 {showHelpButton && (
                     <Button
                         variant="ghost"
                         onClick={() => setIsHelpOpen(true)}
-                        className="gap-2 cursor-pointer px-[10px] py-[6px] h-auto font-normal text-sm !normal-case"
+                        className="gap-2 cursor-pointer h-auto"
                     >
-                        <HelpCircle className="h-5 w-5" />
+                        <HelpCircle />
                         help
                     </Button>
                 )}
             </div>
-
-            <Separator className="bg-ink-200" />
 
             {/* Help Modal */}
             {toolId && (

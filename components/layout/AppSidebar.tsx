@@ -36,11 +36,11 @@ export function AppSidebar() {
     // Map tool IDs to Lucide icons
     const getToolIcon = (id: string) => {
         switch (id) {
-            case "metadata": return <Monitor className="size-5" />;
-            case "comments": return <MessageSquare className="size-5" />;
-            case "thumbnail": return <ImageIcon className="size-5" />;
-            case "qr": return <QrCode className="size-5" />;
-            default: return <Sparkles className="size-5" />;
+            case "metadata": return <Monitor/>;
+            case "comments": return <MessageSquare/>;
+            case "thumbnail": return <ImageIcon/>;
+            case "qr": return <QrCode/>;
+            default: return <Sparkles/>;
         }
     };
 
@@ -48,46 +48,41 @@ export function AppSidebar() {
 
     return (
         <>
-            <Sidebar collapsible="icon" className="bg-ink-200 border-r border-ink-300">
-
-                <SidebarHeader className="px-[40px] py-[16px] group-data-[collapsible=icon]:p-2">
+            <Sidebar collapsible="icon" className="bg-ink-200 border-r border-ink-300 flex flex-col px-4 py-3">
+                <SidebarHeader className="group-data-[collapsible=icon]:justify-center">
                     <div className="flex items-center justify-between w-full">
                         {!isCollapsed && (
-                            <div className="text-xl font-serif text-ink-1000 flex items-center">
-                                <div className="italic">youtube </div>
-                                <div>{" OS"}</div>
-                            </div>
+                        <div className="h2"><span className="italic">youtube </span>OS
+                        </div>
                         )}
                         {!isCollapsed && <SidebarTrigger />}
                         {isCollapsed && (
-                            <div className="w-full flex justify-center">
+                            <div>
                                 <SidebarTrigger />
                             </div>
                         )}
                     </div>
                 </SidebarHeader>
 
+                <Separator />
 
-                <Separator className="opacity-30" />
-
-                <SidebarContent className="px-4 overflow-hidden group-data-[collapsible=icon]:px-0">
+                <SidebarContent>
                     {/* Main Navigation */}
-                    <SidebarGroup className="p-0 pt-4">
+                    <SidebarGroup>
                         <SidebarMenu>
                             <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/dashboard"} className="px-[10px] py-[6px] gap-2">
-                                    <Link href="/dashboard" className="flex items-center gap-2">
-                                        <Home className="size-5" />
-                                        <div className="body">home</div>
-                                    </Link>
+                                <SidebarMenuButton asChild isActive={pathname === "/dashboard"}>
+                                    <a href="/dashboard">
+                                        <Home/><div>home</div>
+                                    </a>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         </SidebarMenu>
                     </SidebarGroup>
 
                     {/* Tools */}
-                    <SidebarGroup className="p-0 pt-4">
-                        <SidebarGroupLabel className="px-[10px] py-[6px] text-ink-700 h-auto group-data-[collapsible=icon]:hidden">tools</SidebarGroupLabel>
+                    <SidebarGroup>
+                        <SidebarGroupLabel className="px-2.5 py-1 text-ink-700 h-auto group-data-[collapsible=icon]:hidden">tools</SidebarGroupLabel>
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 {toolsConfig.filter(t => t.status === "active").map(tool => (
@@ -95,12 +90,11 @@ export function AppSidebar() {
                                         <SidebarMenuButton
                                             asChild
                                             isActive={pathname.startsWith(tool.href)}
-                                            className="px-[10px] py-[6px] gap-2 data-[active=true]:bg-ink-200"
                                         >
-                                            <Link href={tool.href} className="flex items-center gap-2">
+                                            <a href={tool.href}>
                                                 {getToolIcon(tool.id)}
                                                 <div className="body">{tool.name}</div>
-                                            </Link>
+                                            </a>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 ))}
@@ -109,8 +103,8 @@ export function AppSidebar() {
                     </SidebarGroup>
 
                     {/* Coming Soon */}
-                    <SidebarGroup className="p-0 pt-4 flex-1">
-                        <SidebarGroupLabel className="px-[10px] py-[6px] text-ink-700 h-auto group-data-[collapsible=icon]:hidden">coming soon</SidebarGroupLabel>
+                    <SidebarGroup className="flex-1">
+                        <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">coming soon</SidebarGroupLabel>
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 {toolsConfig.filter(t => t.status === "coming-soon").map(tool => {
@@ -118,20 +112,19 @@ export function AppSidebar() {
                                     return (
                                         <SidebarMenuItem key={tool.id}>
                                             {hasPage ? (
-                                                <SidebarMenuButton
+                                                <SidebarMenuButton disabled
                                                     asChild
                                                     isActive={pathname.startsWith(tool.href)}
-                                                    className="px-[10px] py-[6px] gap-2 opacity-60 hover:opacity-100"
                                                 >
-                                                    <Link href={tool.href} className="flex items-center gap-2">
+                                                    <Link href={tool.href}>
                                                         {getToolIcon(tool.id)}
-                                                        <div className="body">{tool.name}</div>
+                                                        <div>{tool.name}</div>
                                                     </Link>
                                                 </SidebarMenuButton>
                                             ) : (
-                                                <SidebarMenuButton disabled className="px-[10px] py-[6px] gap-2">
+                                                <SidebarMenuButton disabled>
                                                     {getToolIcon(tool.id)}
-                                                    <div className="body">{tool.name}</div>
+                                                    <div>{tool.name}</div>
                                                 </SidebarMenuButton>
                                             )}
                                         </SidebarMenuItem>
@@ -141,10 +134,10 @@ export function AppSidebar() {
                         </SidebarGroupContent>
                     </SidebarGroup>
 
-                    <Separator className="opacity-30 group-data-[collapsible=icon]:hidden" />
+                    <Separator />
 
                     {/* Request Tool Button */}
-                    <div className="px-4 py-4 group-data-[collapsible=icon]:hidden">
+                    <div className="group-data-[collapsible=icon]:hidden">
                         <Button
                             onClick={() => setRequestToolModalOpen(true)}
                             variant="default"
@@ -155,24 +148,23 @@ export function AppSidebar() {
                     </div>
                 </SidebarContent>
 
-                <Separator className="opacity-30" />
+                <Separator />
 
-                <SidebarFooter className="px-4 pb-4">
+                <SidebarFooter>
                     {/* User & Settings */}
-                    <SidebarMenu>
-                        <SidebarMenuItem className="flex justify-center">
-                            <ButtonAccount />
-                        </SidebarMenuItem>
-
-                        <SidebarMenuItem>
-                            <SidebarMenuButton asChild isActive={pathname === "/dashboard/settings"} className="px-[10px] py-[6px] gap-2 normal-case">
-                                <Link href="/dashboard/settings" className="flex items-center gap-2">
-                                    <Settings className="size-5" />
-                                    <div className="body">settings</div>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    </SidebarMenu>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild isActive={pathname === "/dashboard/settings"}>
+                                    <Link href="/dashboard/settings">
+                                        <Settings />
+                                        <div>settings</div>
+                                    </Link>
+                                </SidebarMenuButton>
+                                <SidebarMenuItem className="flex justify-center">
+                                    <ButtonAccount />
+                                </SidebarMenuItem>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
                 </SidebarFooter>
             </Sidebar>
 

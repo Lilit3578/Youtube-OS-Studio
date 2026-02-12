@@ -22,19 +22,17 @@ const ButtonAccount = () => {
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
-				<SidebarMenuButton className="normal-case h-12 cursor-pointer group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
+				<SidebarMenuButton className="normal-case h-9 px-2.5 py-1.5 cursor-pointer group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center">
 					{session?.user?.image ? (
 						<img
 							src={session?.user?.image}
 							alt={session?.user?.name || "Account"}
-							className="h-5 w-5 rounded-full shrink-0"
+							className="h-4 w-4 rounded-full shrink-0"
 							referrerPolicy="no-referrer"
-							width={32}
-							height={32}
 						/>
 					) : (
-						<div className="h-8 w-8 rounded-full bg-accent flex items-center justify-center shrink-0">
-							<span className="label text-accent-foreground">
+						<div className="h-5 w-5 rounded-full bg-ink-1000 flex items-center justify-center shrink-0">
+							<span className="label text-ink-0">
 								{session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || "U"}
 							</span>
 						</div>

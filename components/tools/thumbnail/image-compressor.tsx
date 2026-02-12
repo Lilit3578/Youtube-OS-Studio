@@ -115,12 +115,12 @@ export default function ImageCompressor() {
     };
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-4 w-full">
 
             {/* Upload Zone */}
             <div
                 className={cn(
-                    "w-full bg-ink-200 border border-ink-300 border-dashed rounded-[8px] flex flex-col justify-center items-center gap-[16px] p-[40px] transition-colors duration-200 cursor-pointer hover:bg-ink-300",
+                    "w-full bg-ink-200 border border-ink-300 border-dashed rounded-md flex flex-col justify-center items-center gap-4 p-10 transition-colors duration-200 cursor-pointer hover:bg-ink-300",
                     isDragging ? "border-primary bg-ink-300" : ""
                 )}
                 onDragOver={handleDragOver}
@@ -128,8 +128,8 @@ export default function ImageCompressor() {
                 onDrop={handleDrop}
                 onClick={() => document.getElementById("thumbnail-upload-input")?.click()}
             >
-                <div className="relative shrink-0 size-[20px]">
-                    <FileImage size={20} weight="regular" className="text-foreground" />
+                <div>
+                    <FileImage />
                 </div>
 
                 <div className="flex flex-col items-center gap-[8px]">

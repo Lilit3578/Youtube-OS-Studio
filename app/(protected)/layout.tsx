@@ -19,7 +19,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
             <AppSidebar />
             <SidebarInset>
                 <AppHeader />
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto px-10 py-5">
                     {children}
                 </main>
             </SidebarInset>
