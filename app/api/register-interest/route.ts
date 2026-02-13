@@ -61,28 +61,34 @@ export async function POST(req: NextRequest) {
 
         await connectMongo();
 
-        // Add interest atomically (only if not already registered)
-        const result = await User.findOneAndUpdate(
-            { email: session.user.email },
-            { $addToSet: { interests: toolId } },
-            { new: true }
+        // ATOMIC FIX: Use updateOne with strict condition to prevent duplicates & spam
+        // We only want to send an email if the user was NOT already interested.
+        const result = await User.updateOne(
+            {
+                email: session.user.email,
+                interests: { $ne: toolId } // Condition: Interest must NOT exist
+            },
+            {
+                $addToSet: { interests: toolId }
+            }
         );
 
-        if (!result) {
+        // If matchedCount is 0, user doesn't exist.
+        // If modifiedCount is 0, user exists but already has this interest.
+        if (result.matchedCount === 0) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
-        // Count total users who have registered interest in this tool
+        // Count total users for the email stats (eventually consistent is fine)
         const totalInterested = await User.countDocuments({
             interests: toolId,
         });
 
-        // Get the tool name for the email
-        const tool = toolsConfig.find((t) => t.id === toolId);
-        const toolName = tool ? tool.name : toolId;
+        // ONLY send email if we actually modified the document (i.e., it's a NEW interest)
+        if (result.modifiedCount > 0 && process.env.ADMIN_EMAIL) {
+            const tool = toolsConfig.find((t) => t.id === toolId);
+            const toolName = tool ? tool.name : toolId;
 
-        // Notify admin
-        if (process.env.ADMIN_EMAIL) {
             await resend.emails.send({
                 from: config.resend.fromNoReply,
                 to: process.env.ADMIN_EMAIL,
@@ -105,11 +111,15 @@ export async function POST(req: NextRequest) {
                     </div>
                 `,
             });
+            // console.log("📧 Interest notification sent");
+        } else {
+            // console.log("ℹ️ Interest already registered, skipping email");
         }
 
         return NextResponse.json({
             success: true,
             totalInterested,
+            alreadyRegistered: result.modifiedCount === 0
         });
     } catch (error) {
         console.error("Error registering interest:", error);

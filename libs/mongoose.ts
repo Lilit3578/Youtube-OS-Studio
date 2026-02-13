@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import User from "@/models/User";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -16,7 +15,6 @@ interface MongooseCache {
 
 declare global {
   // Using var for global declaration is required by TypeScript
-  // eslint-disable-next-line no-var
   var mongoose: MongooseCache;
 }
 
@@ -33,19 +31,22 @@ const connectMongo = async () => {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
+      bufferCommands: false, // FAIL FAST: Don't hang if DB is down
+      maxPoolSize: 10,       // LIMIT: Prevent lambda exhaustion
       tls: true,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("✅ New MongoDB Connection Established");
       return mongoose;
     });
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e: any) {
+  } catch (e) {
     cached.promise = null;
+    console.error("❌ MongoDB Connection Failed:", e);
     throw e;
   }
 

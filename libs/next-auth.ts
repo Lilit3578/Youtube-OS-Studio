@@ -4,7 +4,7 @@ import EmailProvider from "next-auth/providers/email";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { Resend } from "resend";
 import config from "@/config";
-import connectMongo from "./mongo";
+import connectMongo from "./mongoose";
 
 // Validate required environment variables at startup
 if (!process.env.NEXTAUTH_SECRET) {
@@ -40,12 +40,8 @@ export const authOptions = {
             };
           },
         }),
-      ]
-      : []),
-    // Follow the "Login with Email" tutorial to set up your email server
-    // Requires a MongoDB database. Set MONOGODB_URI env variable.
-    ...(connectMongo
-      ? [
+        // Follow the "Login with Email" tutorial to set up your email server
+        // Requires a MongoDB database. Set MONOGODB_URI env variable.
         EmailProvider({
           server: { host: "smtp.resend.com", port: 465, auth: { user: "resend", pass: process.env.RESEND_API_KEY || "" } },
           from: config.resend.fromNoReply,
@@ -78,61 +74,52 @@ export const authOptions = {
   // New users will be saved in Database (MongoDB Atlas). Each user (model) has some fields like name, email, image, etc..
   // Requires a MongoDB database. Set MONOGODB_URI env variable.
   // Learn more about the model type: https://next-auth.js.org/v3/adapters/models
-  ...(connectMongo && { adapter: MongoDBAdapter(connectMongo) }),
+  // New users will be saved in Database (MongoDB Atlas). Each user (model) has some fields like name, email, image, etc..
+  // Requires a MongoDB database. Set MONOGODB_URI env variable.
+  // Learn more about the model type: https://next-auth.js.org/v3/adapters/models
+  adapter: MongoDBAdapter(
+    connectMongo().then((mongoose) => {
+      return mongoose.connection.getClient() as unknown as import("mongodb").MongoClient;
+    })
+  ),
 
   callbacks: {
     signIn: async ({ user, account }: any) => {
       // Add custom fields to user document on sign in
       if (user && account) {
         try {
+          // CRIT-02 FIX: Force connection before any DB operation
+          await connectMongo();
+
           // Import User model dynamically to avoid circular dependencies
           const { default: User } = await import("@/models/User");
-          await import("@/libs/mongoose");
 
-          // console.log("[DEBUG] Sign-in callback running for:", user.email); // CRIT-02: Removed PII log
-
-          // Check if user already has usage fields using Mongoose
-          const existingUser = await User.findOne(
+          // ATOMIC: Use findOneAndUpdate with upsert for idempotency
+          // This replaces the "find, check, then update" logic which is race-prone
+          await User.updateOne(
             { email: user.email },
-            { usage: 1 }
+            {
+              $addToSet: { authProviders: account.provider },
+              $setOnInsert: {
+                usage: {
+                  metadataInspector: { count: 0, lastResetDate: new Date() },
+                  commentExplorer: { count: 0, lastResetDate: new Date() },
+                  toolRequests: { count: 0, lastResetDate: new Date() },
+                },
+              },
+            },
+            { upsert: true } // Create if doesn't exist
           );
 
-          // console.log("[DEBUG] Existing user usage:", existingUser?.usage ? "EXISTS" : "MISSING");
-
-          // Initialize usage fields if they don't exist
-          if (!existingUser?.usage) {
-            // console.log("[DEBUG] Initializing usage fields for new user with Mongoose");
-            await User.updateOne(
-              { email: user.email },
-              {
-                $addToSet: { authProviders: account.provider },
-                $set: {
-                  usage: {
-                    metadataInspector: { count: 0, lastResetDate: new Date() },
-                    commentExplorer: { count: 0, lastResetDate: new Date() },
-                    toolRequests: { count: 0, lastResetDate: new Date() },
-                  },
-                },
-              }
-            );
-          } else {
-            // Just add the auth provider if usage already exists
-            await User.updateOne(
-              { email: user.email },
-              { $addToSet: { authProviders: account.provider } }
-            );
-          }
-
-          // console.log("[DEBUG] Sign-in callback completed successfully");
+          // console.log("✅ User sign-in processed atomically");
         } catch (error) {
-          console.error("Error updating user during sign-in:", error);
-          // MED-02 Fix: We should probably NOT block sign-in for non-critical updates, 
-          // but we MUST ensure the user doc is valid. 
-          // For now, removing the silent failure is risky if DB is down, so we keep the try/catch 
-          // but logging is sanitized.
-          return false; // Fail the sign-in if we can't ensure user state is valid? 
-          // Actually, for stability, if DB is down, they can't use tools anyway.
-          // Let's return true but log the critical error (without PII).
+          console.error("❌ Auth Callback Error:", error);
+          // Fail safe: don't let broken users in if we can't verify their state
+          // In a high-security context, this should return false. 
+          // However, for availability, if the DB update fails but Auth Provider succeeded, 
+          // we might want to let them in. 
+          // DECISION: Return false to prevent "ghost" users without DB records.
+          return false;
         }
       }
       return true;

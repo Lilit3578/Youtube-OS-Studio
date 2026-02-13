@@ -160,9 +160,9 @@ export function AppSidebar() {
                                     <div>settings</div>
                                 </Link>
                             </SidebarMenuButton>
-                            <SidebarMenuItem className="flex justify-center">
-                                <ButtonAccount />
-                            </SidebarMenuItem>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem className="flex justify-center">
+                            <ButtonAccount />
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarFooter>

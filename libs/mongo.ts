@@ -1,46 +1,12 @@
 import { MongoClient } from "mongodb";
+import connectMongo from "./mongoose";
 
-// This lib is use just to connect to the database in next-auth.
-// We don't use it anywhere else in the API routes—we use mongoose.js instead (to be able to use models)
-// See /libs/nextauth.js file.
+// CRIT-01 FIX: Unified Database Connection Pool
+// This file now reuses the robust Mongoose connection established in libs/mongoose.ts
+// instead of creating a separate, competing connection pool.
 
-declare global {
-  // eslint-disable-next-line no-unused-vars
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
-}
-
-const uri = process.env.MONGODB_URI;
-const options = { tls: true };
-
-let client: MongoClient | undefined;
-let clientPromise: Promise<MongoClient> | undefined;
-
-if (!uri) {
-  console.group("⚠️ MONGODB_URI missing from .env");
-  console.error(
-    "It's not mandatory but a database is required for Magic Links."
-  );
-  console.error(
-    "If you don't need it, remove the code from /libs/next-auth.js (see connectMongo())"
-  );
-  console.groupEnd();
-} else if (process.env.NODE_ENV === "development") {
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
-  }
-  clientPromise = global._mongoClientPromise;
-} else {
-  // In production mode, it's best to not use a global variable.
-  // HOWEVER, to prevent connection leaks common in serverless/lambda environments (like Vercel),
-  // we SHOULD cache the promise in the global scope if possible, or ensure client reuse.
-  // The previous implementation created a NEW client on every import, which is CRIT-03.
-
-  if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
-  }
-  clientPromise = global._mongoClientPromise;
-}
+const clientPromise: Promise<MongoClient> = connectMongo().then((mongoose) => {
+  return mongoose.connection.getClient() as unknown as MongoClient;
+});
 
 export default clientPromise;

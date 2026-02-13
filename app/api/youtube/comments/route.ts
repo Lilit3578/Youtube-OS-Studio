@@ -27,14 +27,19 @@ const requestSchema = z.object({
 });
 
 /** Map internal error signals to safe, user-facing error keys */
-function classifyError(error: any): { errorKey: string; status: number } {
-    if (error.response?.status === 403 || error.status === 403) {
+/** Map internal error signals to safe, user-facing error keys */
+function classifyError(error: unknown): { errorKey: string; status: number } {
+    const err = error as any;
+    const status = err?.response?.status || err?.status;
+    const message = err?.message || "";
+
+    if (status === 403) {
         return { errorKey: "QUOTA_EXCEEDED", status: 429 };
     }
-    if (error.message?.includes("disabled")) {
+    if (message.includes("disabled")) {
         return { errorKey: "DISABLED", status: 400 };
     }
-    if (error.message?.includes("not found") || error.response?.status === 404) {
+    if (message.includes("not found") || status === 404) {
         return { errorKey: "NO_PUBLIC", status: 404 };
     }
     return { errorKey: "GENERIC_FAIL", status: 500 };
@@ -105,47 +110,7 @@ export async function POST(req: Request) {
             }
         );
 
-        // Get user and check limit (avoiding nested field query issues)
-        // console.log("[DEBUG] Finding user:", session.user.email); // CRIT-02: Removed PII log
-
-        // Optimization: Use findOneAndUpdate to atomically check and increment if possible,
-        // but for complex quota logic with resets, we need a robust approach.
-        // We will stick to the current logic but ENSURE atomic increments later.
-        const user = await User.findOne({ email: session.user.email });
-
-        if (!user) {
-            // console.log("[DEBUG] User not found");
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
-
-        // console.log("[DEBUG] User found, checking usage");
-        // console.log("[DEBUG] Current count:", user.usage?.commentExplorer?.count);
-        // console.log("[DEBUG] Limit:", DAILY_LIMIT);
-
-        // Check if usage fields exist, if not initialize them
-        if (!user.usage || !user.usage.commentExplorer) {
-            console.log("[DEBUG] Usage fields missing, initializing");
-            user.usage = {
-                metadataInspector: { count: 0, lastResetDate: new Date() },
-                commentExplorer: { count: 0, lastResetDate: new Date() },
-                toolRequests: { count: 0, lastResetDate: new Date() },
-            };
-            await user.save();
-        }
-
-        // Double check just for early return, though the atomic update is the real guard
-        if (user.usage.commentExplorer.count >= DAILY_LIMIT) {
-            console.log("[DEBUG] Limit reached");
-            return NextResponse.json(
-                {
-                    error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
-                    errorKey: "QUOTA_EXCEEDED",
-                },
-                { status: 429 }
-            );
-        }
-
-        // Atomic Increment with Condition (CRIT-01 Fix)
+        // Atomic Increment with Condition (MED-01 Fix)
         // We use findOneAndUpdate to ensure we only increment IF the key is still under the limit.
         // This prevents the "check-then-act" race condition.
         const updatedUser = await User.findOneAndUpdate(
@@ -160,26 +125,16 @@ export async function POST(req: Request) {
         );
 
         if (!updatedUser) {
-            // If the update returned null, it means the condition (count < limit) failed
-            // double check if it was due to limit or user missing
-            const checkUser = await User.findOne({ email: session.user.email });
-            if (checkUser && checkUser.usage?.commentExplorer?.count >= DAILY_LIMIT) {
-                return NextResponse.json(
-                    {
-                        error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
-                        errorKey: "QUOTA_EXCEEDED",
-                    },
-                    { status: 429 }
-                );
-            }
-            // Fallback for other failures
-            return NextResponse.json({ error: "User not found or update failed" }, { status: 500 });
+            // If the update returned null, it means the condition (count < limit) failed OR user doesn't exist
+            // We assume it's a quota issue for safety in high-load scenarios.
+            return NextResponse.json(
+                {
+                    error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
+                    errorKey: "QUOTA_EXCEEDED",
+                },
+                { status: 429 }
+            );
         }
-
-        // console.log("[DEBUG] Incrementing counter");
-        // user.usage.commentExplorer.count += 1;
-        // await user.save();
-        // console.log("[DEBUG] Counter incremented to:", user.usage.commentExplorer.count);
 
         // Fetch comments
         const comments = await fetchComments(videoId);
@@ -199,7 +154,7 @@ export async function POST(req: Request) {
             counts
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error in comment extraction API:", error);
 
         // Never leak internal error messages to the client

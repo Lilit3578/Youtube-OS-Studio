@@ -47,12 +47,16 @@ export default function SettingsPage() {
 
     // Load preferences on mount
     useEffect(() => {
+        const controller = new AbortController();
+
         async function loadPreferences() {
             try {
-                const res = await fetch("/api/account/preferences");
+                const res = await fetch("/api/account/preferences", {
+                    signal: controller.signal
+                });
                 if (res.ok) {
                     const json = await res.json();
-                    if (json.data && Object.keys(json.data).length > 0) {
+                    if (!controller.signal.aborted && json.data && Object.keys(json.data).length > 0) {
                         setPrefs((prev) => ({
                             ...prev,
                             ...json.data,
@@ -63,13 +67,19 @@ export default function SettingsPage() {
                         }));
                     }
                 }
-            } catch {
-                // Silently use defaults
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    // Silently use defaults or log if needed
+                }
             } finally {
-                setLoaded(true);
+                if (!controller.signal.aborted) {
+                    setLoaded(true);
+                }
             }
         }
         loadPreferences();
+
+        return () => controller.abort();
     }, []);
 
     const handleSavePreferences = async () => {

@@ -15,7 +15,13 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Unhandled error:", error);
+    // DEFENSIVE: Don't log full error objects in production
+    if (process.env.NODE_ENV === "development") {
+      console.error("Unhandled error:", error);
+    } else {
+      // In prod, log only the message or send to Sentry/logging service
+      console.error("Application Error:", error.message, (error as any).digest);
+    }
   }, [error]);
 
   return (
