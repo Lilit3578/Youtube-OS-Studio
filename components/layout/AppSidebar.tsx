@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Monitor, MessageSquare, ImageIcon, QrCode, Sparkles, Settings, PanelLeft } from "lucide-react";
+import { Home, Monitor, MessageSquare, ImageIcon, QrCode, Sparkles, Settings } from "lucide-react";
 import {
     Sidebar,
     SidebarContent,
@@ -23,7 +23,6 @@ import { Separator } from "@/components/ui/separator";
 import { toolsConfig } from "@/config";
 import RequestToolModal from "@/components/modals/RequestToolModal";
 import ButtonAccount from "@/components/ButtonAccount";
-import { cn } from "@/libs/utils";
 
 export function AppSidebar() {
     const pathname = usePathname();

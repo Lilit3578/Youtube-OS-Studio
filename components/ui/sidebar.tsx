@@ -296,7 +296,7 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className="cursor-w-resize text-ink-600 group-data-[collapsible=icon]:text-ink-1000 group-data-[collapsible=icon]:cursor-e-resize"
+      className={cn("cursor-w-resize text-ink-600 group-data-[collapsible=icon]:text-ink-1000 group-data-[collapsible=icon]:cursor-e-resize", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()

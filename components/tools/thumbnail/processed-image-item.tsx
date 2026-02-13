@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useMemo } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { formatBytes, cn } from "@/libs/utils";
-import { Download, FileImage, FileText, WarningCircle, CheckCircle } from "@phosphor-icons/react";
+import { FileImage, FileText, WarningCircle } from "@phosphor-icons/react";
 import {
     Popover,
     PopoverContent,
@@ -123,14 +123,15 @@ export default function ProcessedImageItem({
                     setIsComparing(false);
                 }}
             >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 {activeUrl && (
-                    <img
+                    <Image
                         key={isComparing ? 'original' : 'processed'}
                         src={activeUrl}
                         alt={processedFile.name}
+                        fill
+                        unoptimized
                         className={cn(
-                            "w-full h-full transition-opacity duration-200",
+                            "transition-opacity duration-200",
                             // Use object-contain for original to show full image, object-cover for processed to fill frame
                             isComparing ? "object-contain" : "object-cover",
                             status === "error" && "grayscale"

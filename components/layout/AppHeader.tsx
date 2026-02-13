@@ -5,8 +5,6 @@ import { usePathname } from "next/navigation";
 import { toolsConfig } from "@/config";
 import HelpModal from "@/components/modals/HelpModal";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { HelpCircle } from "lucide-react";
 
 const AppHeader = () => {
@@ -34,9 +32,9 @@ const AppHeader = () => {
     return (
         <>
             <div className="w-full flex items-center justify-between bg-transparent px-10 py-3.5 border-b border-ink-200">
-                    <div className="h2 italic">
-                        {getPageTitle()}
-                    </div>
+                <div className="h2 italic">
+                    {getPageTitle()}
+                </div>
 
                 {showHelpButton && (
                     <Button
