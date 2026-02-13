@@ -41,7 +41,24 @@ export async function apiClient<T>(
             headers,
         });
 
-        const json: ApiResponse<T> = await response.json();
+        let json: ApiResponse<T>;
+        try {
+            json = await response.json();
+        } catch (error) {
+            // Handle cases where response is not JSON (e.g. 500 HTML error from Vercel)
+            if (!response.ok) {
+                throw new ApiError(
+                    `Server Error (${response.status})`,
+                    response.status,
+                    "SERVER_ERROR"
+                );
+            }
+            throw new ApiError(
+                "Invalid response from server",
+                response.status,
+                "INVALID_RESPONSE"
+            );
+        }
 
         if (!response.ok) {
             // Handle specific error codes

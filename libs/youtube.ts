@@ -76,9 +76,11 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
 
         const comments: Comment[] = items
             .map((item: any) => {
-                const snippet = item.snippet.topLevelComment.snippet;
+                const snippet = item?.snippet?.topLevelComment?.snippet;
+                if (!snippet) return null;
+
                 const text = snippet.textDisplay;
-                const totalReplyCount = item.snippet.totalReplyCount || 0;
+                const totalReplyCount = item.snippet?.totalReplyCount || 0;
 
                 // Filter emoji-only comments
                 // Remove emojis, symbols, punctuation, and whitespace

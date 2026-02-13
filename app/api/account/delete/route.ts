@@ -29,10 +29,14 @@ export async function DELETE() {
         }
 
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("Error deleting account:", error);
+    } catch (error: any) {
+        console.error("[ACCOUNT_DELETE_ERROR]", {
+            message: error.message,
+            stack: error.stack,
+            user: (await auth())?.user?.email
+        });
         return NextResponse.json(
-            { error: "Failed to delete account" },
+            { error: "Failed to delete account. Please try again later." },
             { status: 500 }
         );
     }

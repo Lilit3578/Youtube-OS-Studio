@@ -127,8 +127,24 @@ export const authOptions = {
     session: async ({ session, token }: any) => {
       if (session?.user) {
         session.user.id = token.sub;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.picture;
       }
       return session;
+    },
+    jwt: async ({ token, user, trigger, session }: any) => {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.picture = user.image;
+      }
+      if (trigger === "update" && session?.user) {
+        token.name = session.user.name;
+        token.email = session.user.email;
+      }
+      return token;
     },
   },
   session: {

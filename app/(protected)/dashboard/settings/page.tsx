@@ -9,13 +9,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import toast from "react-hot-toast";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 
 interface Preferences {
-    exportFormat: string;
-    dateFormat: string;
-    timezone: string;
     notifications: {
         toolCompletion: boolean;
         newFeatures: boolean;
@@ -25,9 +24,6 @@ interface Preferences {
 }
 
 const DEFAULT_PREFS: Preferences = {
-    exportFormat: "csv",
-    dateFormat: "iso",
-    timezone: "utc",
     notifications: {
         toolCompletion: true,
         newFeatures: true,
@@ -37,13 +33,25 @@ const DEFAULT_PREFS: Preferences = {
 };
 
 export default function SettingsPage() {
-    const { data: session } = useSession();
-    const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
+    const { data: session, update } = useSession();
+    const [prefs, setPrefs] = useState<Preferences>(() => ({ ...DEFAULT_PREFS }));
+    const [profile, setProfile] = useState({ name: "", email: "" });
     const [saving, setSaving] = useState(false);
     const [loaded, setLoaded] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [deleting, setDeleting] = useState(false);
+
+    // Initialize profile from session
+    useEffect(() => {
+        if (session?.user) {
+            setProfile({
+                name: session.user.name || "",
+                email: session.user.email || "",
+            });
+        }
+    }, [session]);
 
     // Load preferences on mount
     useEffect(() => {
@@ -62,14 +70,18 @@ export default function SettingsPage() {
                             ...json.data,
                             notifications: {
                                 ...prev.notifications,
-                                ...json.data.notifications,
+                                ...(json.data?.notifications || {}),
                             },
                         }));
                     }
+                } else {
+                    throw new Error("Failed to load preferences");
                 }
             } catch (err: any) {
                 if (err.name !== 'AbortError') {
-                    // Silently use defaults or log if needed
+                    console.error("Failed to load preferences:", err);
+                    setError("Failed to load settings. Please refresh the page.");
+                    toast.error("Could not load your settings. Saving is disabled to prevent data loss.");
                 }
             } finally {
                 if (!controller.signal.aborted) {
@@ -85,15 +97,40 @@ export default function SettingsPage() {
     const handleSavePreferences = async () => {
         setSaving(true);
         try {
-            const res = await fetch("/api/account/preferences", {
+            // Save Profile (Name/Email)
+            const profileRes = await fetch("/api/account/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(profile),
+            });
+
+            if (!profileRes.ok) {
+                const data = await profileRes.json();
+                throw new Error(data.error || "Failed to update profile");
+            }
+
+            // Save Preferences
+            const prefsRes = await fetch("/api/account/preferences", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(prefs),
             });
-            if (!res.ok) {
-                const data = await res.json();
+
+            if (!prefsRes.ok) {
+                const data = await prefsRes.json();
                 throw new Error(data.error || ERROR_MESSAGES.ACCOUNT.SAVE_FAILED);
             }
+
+            // Update session to reflect new name/email
+            await update({
+                ...session,
+                user: {
+                    ...session?.user,
+                    name: profile.name,
+                    email: profile.email,
+                },
+            });
+
             toast.success(SUCCESS_MESSAGES.ACCOUNT.SAVED);
         } catch (err: any) {
             toast.error(err.message || ERROR_MESSAGES.ACCOUNT.SAVE_FAILED);
@@ -125,9 +162,11 @@ export default function SettingsPage() {
                 <h1 className="text-[40px] leading-[44px] font-serif font-normal text-foreground mb-8">
                     Settings
                 </h1>
-                <div className="animate-pulse space-y-8">
-                    <div className="h-48 bg-accent rounded-lg" />
-                    <div className="h-64 bg-accent rounded-lg" />
+                <div className="space-y-8">
+                    {/* Account Section Skeleton */}
+                    <Skeleton className="h-[280px] w-full rounded-lg" />
+                    {/* Notifications Skeleton */}
+                    <Skeleton className="h-[320px] w-full rounded-lg" />
                 </div>
             </div>
         );
@@ -149,24 +188,24 @@ export default function SettingsPage() {
                         <label className="block p-medium text-foreground mb-1">Name</label>
                         <input
                             type="text"
-                            value={session?.user?.name || ""}
-                            disabled
-                            className="body w-full px-3 py-2 border border-input rounded-md bg-accent text-muted-foreground cursor-not-allowed"
+                            value={profile.name}
+                            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                            className="body w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         />
                         <p className="caption text-muted-foreground mt-1">
-                            Your name from Google account
+                            Your display name
                         </p>
                     </div>
                     <div>
                         <label className="block p-medium text-foreground mb-1">Email</label>
                         <input
                             type="email"
-                            value={session?.user?.email || ""}
-                            disabled
-                            className="body w-full px-3 py-2 border border-input rounded-md bg-accent text-muted-foreground cursor-not-allowed"
+                            value={profile.email}
+                            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                            className="body w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         />
                         <p className="caption text-muted-foreground mt-1">
-                            Your email from Google account
+                            Your email address used for sign in
                         </p>
                     </div>
                     <div className="pt-4 border-t border-border">
@@ -179,63 +218,6 @@ export default function SettingsPage() {
                         <p className="caption text-muted-foreground mt-1">
                             Permanently delete your account and all data
                         </p>
-                    </div>
-                </div>
-            </section>
-
-            {/* Export Preferences Section */}
-            <section className="mb-8 bg-card rounded-lg border border-border p-6">
-                <h2 className="text-[20px] leading-[28px] font-serif font-normal text-foreground mb-4">
-                    Export Preferences
-                </h2>
-                <div className="space-y-4">
-                    <div>
-                        <label className="block p-medium text-foreground mb-1">
-                            Default Export Format
-                        </label>
-                        <select
-                            value={prefs.exportFormat}
-                            onChange={(e) =>
-                                setPrefs({ ...prefs, exportFormat: e.target.value })
-                            }
-                            className="body w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                            <option value="csv">CSV</option>
-                            <option value="xlsx">Excel (XLSX)</option>
-                            <option value="json">JSON</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block p-medium text-foreground mb-1">
-                            Date Format
-                        </label>
-                        <select
-                            value={prefs.dateFormat}
-                            onChange={(e) =>
-                                setPrefs({ ...prefs, dateFormat: e.target.value })
-                            }
-                            className="body w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                            <option value="us">MM/DD/YYYY (US)</option>
-                            <option value="eu">DD/MM/YYYY (EU)</option>
-                            <option value="iso">YYYY-MM-DD (ISO)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block p-medium text-foreground mb-1">Timezone</label>
-                        <select
-                            value={prefs.timezone}
-                            onChange={(e) =>
-                                setPrefs({ ...prefs, timezone: e.target.value })
-                            }
-                            className="body w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        >
-                            <option value="utc">UTC</option>
-                            <option value="local">Local Time</option>
-                            <option value="pst">PST (Pacific)</option>
-                            <option value="est">EST (Eastern)</option>
-                            <option value="cet">CET (Central European)</option>
-                        </select>
                     </div>
                 </div>
             </section>
@@ -255,25 +237,18 @@ export default function SettingsPage() {
                                 Get notified when long-running tasks complete
                             </p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                role="switch"
-                                aria-label="Tool completion notifications"
-                                className="sr-only peer"
-                                checked={prefs.notifications.toolCompletion}
-                                onChange={(e) =>
-                                    setPrefs({
-                                        ...prefs,
-                                        notifications: {
-                                            ...prefs.notifications,
-                                            toolCompletion: e.target.checked,
-                                        },
-                                    })
-                                }
-                            />
-                            <div className="w-11 h-6 bg-accent peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-foreground" />
-                        </label>
+                        <Switch
+                            checked={prefs.notifications.toolCompletion}
+                            onCheckedChange={(checked) =>
+                                setPrefs({
+                                    ...prefs,
+                                    notifications: {
+                                        ...prefs.notifications,
+                                        toolCompletion: checked,
+                                    },
+                                })
+                            }
+                        />
                     </div>
                     <div className="flex items-center justify-between">
                         <div>
@@ -284,25 +259,18 @@ export default function SettingsPage() {
                                 Stay updated on new tools and features
                             </p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                role="switch"
-                                aria-label="New feature announcements"
-                                className="sr-only peer"
-                                checked={prefs.notifications.newFeatures}
-                                onChange={(e) =>
-                                    setPrefs({
-                                        ...prefs,
-                                        notifications: {
-                                            ...prefs.notifications,
-                                            newFeatures: e.target.checked,
-                                        },
-                                    })
-                                }
-                            />
-                            <div className="w-11 h-6 bg-accent peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-foreground" />
-                        </label>
+                        <Switch
+                            checked={prefs.notifications.newFeatures}
+                            onCheckedChange={(checked) =>
+                                setPrefs({
+                                    ...prefs,
+                                    notifications: {
+                                        ...prefs.notifications,
+                                        newFeatures: checked,
+                                    },
+                                })
+                            }
+                        />
                     </div>
                     <div className="flex items-center justify-between">
                         <div>
@@ -311,25 +279,18 @@ export default function SettingsPage() {
                                 Receive tips, tutorials, and promotional content
                             </p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                role="switch"
-                                aria-label="Marketing emails"
-                                className="sr-only peer"
-                                checked={prefs.notifications.marketing}
-                                onChange={(e) =>
-                                    setPrefs({
-                                        ...prefs,
-                                        notifications: {
-                                            ...prefs.notifications,
-                                            marketing: e.target.checked,
-                                        },
-                                    })
-                                }
-                            />
-                            <div className="w-11 h-6 bg-accent peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-foreground" />
-                        </label>
+                        <Switch
+                            checked={prefs.notifications.marketing}
+                            onCheckedChange={(checked) =>
+                                setPrefs({
+                                    ...prefs,
+                                    notifications: {
+                                        ...prefs.notifications,
+                                        marketing: checked,
+                                    },
+                                })
+                            }
+                        />
                     </div>
                 </div>
             </section>
@@ -347,19 +308,12 @@ export default function SettingsPage() {
                                 Help us improve by sharing anonymous usage data
                             </p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                role="switch"
-                                aria-label="Analytics opt-in"
-                                className="sr-only peer"
-                                checked={prefs.analyticsOptIn}
-                                onChange={(e) =>
-                                    setPrefs({ ...prefs, analyticsOptIn: e.target.checked })
-                                }
-                            />
-                            <div className="w-11 h-6 bg-accent peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-foreground" />
-                        </label>
+                        <Switch
+                            checked={prefs.analyticsOptIn}
+                            onCheckedChange={(checked) =>
+                                setPrefs({ ...prefs, analyticsOptIn: checked })
+                            }
+                        />
                     </div>
                 </div>
             </section>
@@ -368,7 +322,7 @@ export default function SettingsPage() {
             <div className="flex justify-end mb-12">
                 <Button
                     onClick={handleSavePreferences}
-                    disabled={saving}
+                    disabled={saving || !loaded || !!error}
                     className="normal-case px-8"
                 >
                     {saving ? "Saving..." : "Save Preferences"}
