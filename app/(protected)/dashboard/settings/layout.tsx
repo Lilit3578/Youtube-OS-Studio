@@ -4,7 +4,7 @@ import config from "@/config";
 
 export const metadata = getSEOTags({
     title: `Settings | ${config.appName}`,
-    description: "Manage your account preferences, export settings, and notification preferences.",
+    description: "Manage your profile and account settings.",
     extraTags: {
         robots: { index: false, follow: false },
     },

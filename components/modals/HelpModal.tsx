@@ -63,7 +63,7 @@ export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
                                     // eslint-disable-next-line no-useless-escape
                                     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
                                     const match = content.videoUrl.match(regex);
-                                    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+                                    return match ? `https://www.youtube.com/embed/${match[1]}?vq=hd1080` : null;
                                 })()
                                 : null;
 

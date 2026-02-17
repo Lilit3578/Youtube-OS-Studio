@@ -14,31 +14,11 @@ import toast from "react-hot-toast";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 import { Separator } from "@/components/ui/separator";
 
-interface Preferences {
-    notifications: {
-        toolCompletion: boolean;
-        newFeatures: boolean;
-        marketing: boolean;
-    };
-    analyticsOptIn: boolean;
-}
-
-const DEFAULT_PREFS: Preferences = {
-    notifications: {
-        toolCompletion: true,
-        newFeatures: true,
-        marketing: false,
-    },
-    analyticsOptIn: true,
-};
-
 export default function SettingsPage() {
     const { data: session, update } = useSession();
-    const [prefs, setPrefs] = useState<Preferences>(() => ({ ...DEFAULT_PREFS }));
     const [profile, setProfile] = useState({ name: "", email: "" });
     const [saving, setSaving] = useState(false);
     const [loaded, setLoaded] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [deleting, setDeleting] = useState(false);
@@ -50,51 +30,11 @@ export default function SettingsPage() {
                 name: session.user.name || "",
                 email: session.user.email || "",
             });
+            setLoaded(true);
         }
     }, [session]);
 
-    // Load preferences on mount
-    useEffect(() => {
-        const controller = new AbortController();
-
-        async function loadPreferences() {
-            try {
-                const res = await fetch("/api/account/preferences", {
-                    signal: controller.signal
-                });
-                if (res.ok) {
-                    const json = await res.json();
-                    if (!controller.signal.aborted && json.data && Object.keys(json.data).length > 0) {
-                        setPrefs((prev) => ({
-                            ...prev,
-                            ...json.data,
-                            notifications: {
-                                ...prev.notifications,
-                                ...(json.data?.notifications || {}),
-                            },
-                        }));
-                    }
-                } else {
-                    throw new Error("Failed to load preferences");
-                }
-            } catch (err: any) {
-                if (err.name !== 'AbortError') {
-                    console.error("Failed to load preferences:", err);
-                    setError("Failed to load settings. Please refresh the page.");
-                    toast.error("Could not load your settings. Saving is disabled to prevent data loss.");
-                }
-            } finally {
-                if (!controller.signal.aborted) {
-                    setLoaded(true);
-                }
-            }
-        }
-        loadPreferences();
-
-        return () => controller.abort();
-    }, []);
-
-    const handleSavePreferences = async () => {
+    const handleSaveProfile = async () => {
         setSaving(true);
         try {
             // Save Profile (Name/Email)
@@ -109,18 +49,6 @@ export default function SettingsPage() {
                 throw new Error(data.error || "Failed to update profile");
             }
 
-            // Save Preferences
-            const prefsRes = await fetch("/api/account/preferences", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(prefs),
-            });
-
-            if (!prefsRes.ok) {
-                const data = await prefsRes.json();
-                throw new Error(data.error || ERROR_MESSAGES.ACCOUNT.SAVE_FAILED);
-            }
-
             // Update session to reflect new name/email
             await update({
                 ...session,
@@ -131,9 +59,9 @@ export default function SettingsPage() {
                 },
             });
 
-            toast.success(SUCCESS_MESSAGES.ACCOUNT.SAVED);
+            toast.success("Profile saved");
         } catch (err: any) {
-            toast.error(err.message || ERROR_MESSAGES.ACCOUNT.SAVE_FAILED);
+            toast.error(err.message || "Failed to save profile");
         } finally {
             setSaving(false);
         }
@@ -165,8 +93,6 @@ export default function SettingsPage() {
                 <div className="space-y-8">
                     {/* Account Section Skeleton */}
                     <Skeleton className="w-full" />
-                    {/* Notifications Skeleton */}
-                    <Skeleton className="w-fullg" />
                 </div>
             </div>
         );
@@ -207,11 +133,11 @@ export default function SettingsPage() {
                     <div className="flex items-center w-full justify-between">
                         <div>
                             <Button
-                                onClick={handleSavePreferences}
-                                disabled={saving || !loaded || !!error}
+                                onClick={handleSaveProfile}
+                                disabled={saving || !loaded}
                                 className="px-8 cursor-pointer"
                             >
-                                {saving ? "Saving..." : "Save preferences"}
+                                {saving ? "Saving..." : "Save details"}
                             </Button>
                         </div>
                         <div>
@@ -238,7 +164,7 @@ export default function SettingsPage() {
                     <div className="space-y-4 pt-2">
                         <p className="body text-muted-foreground">
                             This action is <strong className="text-destructive">permanent and irreversible</strong>.
-                            All your data, preferences, and usage history will be deleted.
+                            All your data and usage history will be deleted.
                         </p>
                         <div>
                             <label className="block p-medium text-foreground mb-1">

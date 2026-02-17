@@ -34,7 +34,6 @@ export const ERROR_MESSAGES = {
             "An unexpected error occurred. Please try again or contact support.",
     },
     ACCOUNT: {
-        SAVE_FAILED: "Failed to save preferences.",
         DELETE_FAILED: "Failed to delete account.",
     },
     FORM: {
@@ -86,7 +85,7 @@ export const ERROR_MESSAGES = {
 
 export const SUCCESS_MESSAGES = {
     ACCOUNT: {
-        SAVED: "Preferences saved",
+        SAVED: "Profile saved",
         DELETED: "Account deleted",
     },
     CLIPBOARD: {

@@ -38,30 +38,6 @@ const userSchema = new mongoose.Schema(
         lastResetDate: { type: Date, default: Date.now },
       },
     },
-    // User preferences (settings page)
-    preferences: {
-      exportFormat: {
-        type: String,
-        enum: ["csv", "xlsx", "json"],
-        default: "csv",
-      },
-      dateFormat: {
-        type: String,
-        enum: ["us", "eu", "iso"],
-        default: "iso",
-      },
-      timezone: {
-        type: String,
-        enum: ["utc", "local", "pst", "est", "cet"],
-        default: "utc",
-      },
-      notifications: {
-        toolCompletion: { type: Boolean, default: true },
-        newFeatures: { type: Boolean, default: true },
-        marketing: { type: Boolean, default: false },
-      },
-      analyticsOptIn: { type: Boolean, default: true },
-    },
     // Tool IDs the user has registered interest in (coming-soon tools)
     interests: {
       type: [String],

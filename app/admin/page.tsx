@@ -41,7 +41,7 @@ export default async function AdminDashboard() {
     // or just use the same list if < 1000 users.
     // We'll stick to the 100 for display, but let's actually fetch all for the export button safely?
     // Actually, let's just use the `users` list we have for now to update UI constraints.
-    const allUsersForExport = await User.find().sort({ createdAt: -1 }).select("name email createdAt interests preferences").lean();
+    const allUsersForExport = await User.find().sort({ createdAt: -1 }).select("name email createdAt interests").lean();
 
     return (
         <div className="space-y-8">
@@ -105,7 +105,6 @@ export default async function AdminDashboard() {
                                 <th className="px-6 py-3 text-xs font-mono uppercase text-ink-700 font-medium">Joined</th>
                                 <th className="px-6 py-3 text-xs font-mono uppercase text-ink-700 font-medium">User</th>
                                 <th className="px-6 py-3 text-xs font-mono uppercase text-ink-700 font-medium">Interests</th>
-                                <th className="px-6 py-3 text-xs font-mono uppercase text-ink-700 font-medium">Marketing</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-ink-100">
@@ -140,16 +139,6 @@ export default async function AdminDashboard() {
                                             ))}
                                             {!user.interests?.length && <span className="text-ink-300 text-xs">-</span>}
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {user.preferences?.notifications?.marketing ?
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                Active
-                                            </span> :
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-ink-50 text-ink-400 border border-ink-200">
-                                                Inactive
-                                            </span>
-                                        }
                                     </td>
                                 </tr>
                             ))}
