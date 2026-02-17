@@ -1,7 +1,6 @@
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import AdminExport from "@/components/AdminExport";
-import { Copy } from "lucide-react";
 import Image from "next/image";
 
 export const dynamic = "force-dynamic";

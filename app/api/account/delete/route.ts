@@ -3,6 +3,7 @@ import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import clientPromise from "@/libs/mongo";
+import { ObjectId } from "mongodb";
 
 export async function DELETE() {
     try {
@@ -22,10 +23,13 @@ export async function DELETE() {
         const client = await clientPromise;
         if (client) {
             const db = client.db();
-            await db.collection("accounts").deleteMany({ userId: session.user.id });
-            await db.collection("sessions").deleteMany({ userId: session.user.id });
+            // Fix: Cast string ID to ObjectId for native driver queries
+            const objectId = new ObjectId(session.user.id);
+
+            await db.collection("accounts").deleteMany({ userId: objectId });
+            await db.collection("sessions").deleteMany({ userId: objectId });
             // Also remove the user doc from the raw users collection (adapter may use a different doc)
-            await db.collection("users").deleteOne({ email });
+            await db.collection("users").deleteOne({ _id: objectId });
         }
 
         return NextResponse.json({ success: true });

@@ -31,11 +31,11 @@ const ButtonAccount = () => {
 							referrerPolicy="no-referrer"
 						/>
 					) : (
-						<div className="h-5 w-5 rounded-full bg-ink-1000 flex items-center justify-center shrink-0">
+						<span className="h-5 w-5 rounded-full bg-ink-1000 flex items-center justify-center shrink-0">
 							<span className="label text-ink-0">
 								{session?.user?.name?.[0]?.toUpperCase() || session?.user?.email?.[0]?.toUpperCase() || "U"}
 							</span>
-						</div>
+						</span>
 					)}
 					{!isCollapsed && (
 						<div className="flex flex-col items-start overflow-hidden">

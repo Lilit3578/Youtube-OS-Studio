@@ -31,15 +31,15 @@ export default function FilterTabs({ currentFilter, onFilterChange, onCopyAll, c
 
     return (
         <>
-            <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
                     {tabs.map((tab) => (
                         <Button
                             key={tab.id}
                             variant="ghost"
                             onClick={() => onFilterChange(tab.id)}
                             className={cn(
-                                "body font-medium px-4 py-1.5 rounded-full transition-all whitespace-nowrap flex items-center gap-2 h-auto !normal-case cursor-pointer",
+                                "body font-medium px-4 py-1.5 rounded-full transition-all whitespace-nowrap flex items-center gap-2 h-auto !normal-case cursor-pointer shrink-0",
                                 currentFilter === tab.id
                                     ? "bg-ink-400 text-ink-1000"
                                     : "bg-transparent text-ink-800"
@@ -58,7 +58,7 @@ export default function FilterTabs({ currentFilter, onFilterChange, onCopyAll, c
                 <Button
                     variant="ghost"
                     onClick={onCopyAll}
-                    className="flex items-center gap-2 label text-ink-700 hover:text-ink-1000 h-auto shrink-0 px-3 py-1.5"
+                    className="flex items-center justify-center sm:justify-start gap-2 label text-ink-700 hover:text-ink-1000 h-auto shrink-0 px-3 py-1.5 cursor-pointer w-full sm:w-auto"
                 >
                     <Copy className="w-3.5 h-3.5" />
                     COPY ALL

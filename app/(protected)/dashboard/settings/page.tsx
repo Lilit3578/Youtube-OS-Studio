@@ -10,11 +10,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import toast from "react-hot-toast";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 import { Separator } from "@/components/ui/separator";
-import { DESTRUCTION } from "dns";
 
 interface Preferences {
     notifications: {
@@ -261,7 +259,7 @@ export default function SettingsPage() {
                                     setDeleteDialogOpen(false);
                                     setDeleteConfirmText("");
                                 }}
-                                className="normal-case"
+                                className="normal-case cursor-pointer"
                             >
                                 Cancel
                             </Button>
@@ -269,7 +267,7 @@ export default function SettingsPage() {
                                 variant="destructive"
                                 onClick={handleDeleteAccount}
                                 disabled={deleteConfirmText !== "DELETE" || deleting}
-                                className="normal-case"
+                                className="normal-case cursor-pointer"
                             >
                                 {deleting ? "Deleting..." : "Delete My Account"}
                             </Button>
