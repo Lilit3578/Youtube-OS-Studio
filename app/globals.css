@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Fonts */
+  --font-serif: var(--font-instrument-serif);
+  --font-sans: var(--font-be-vietnam-pro);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Ink Palette - Light Mode Defaults */
+  --color-ink-0: #FEFEFE;
+  --color-ink-100: color-mix(in srgb, #141414 2%, transparent);
+  --color-ink-200: color-mix(in srgb, #141414 4%, transparent);
+  --color-ink-300: color-mix(in srgb, #141414 8%, transparent);
+  --color-ink-400: color-mix(in srgb, #141414 12%, transparent);
+  --color-ink-500: color-mix(in srgb, #141414 16%, transparent);
+  --color-ink-600: color-mix(in srgb, #141414 24%, transparent);
+  --color-ink-700: color-mix(in srgb, #141414 40%, transparent);
+  --color-ink-800: color-mix(in srgb, #141414 64%, transparent);
+  --color-ink-900: color-mix(in srgb, #141414 80%, transparent);
+  --color-ink-1000: #141414;
+
+  /* System Colors */
+  --color-system-primary: #0A68F5;
+  --color-system-danger: #B81616;
+
+  /* Mapping to Shadcn/Standard Tailwind names */
+  --color-background: var(--color-ink-0);
+  --color-foreground: var(--color-ink-1000);
+
+  --color-primary: var(--color-ink-1000);
+  --color-primary-foreground: var(--color-ink-0);
+
+  --color-destructive: var(--color-system-danger);
+  --color-destructive-foreground: var(--color-ink-0);
+
+  --color-muted: var(--color-ink-200);
+  --color-muted-foreground: var(--color-ink-700);
+
+  --color-accent: var(--color-ink-1000);
+  --color-accent-foreground: var(--color-ink-0);
+
+  --color-border: var(--color-ink-300);
+  --color-input: var(--color-ink-700);
+  --color-ring: var(--color-system-primary);
+
+  --color-card: var(--color-ink-0);
+  --color-card-foreground: var(--color-ink-1000);
+
+  --color-popover: var(--color-ink-0);
+  --color-popover-foreground: var(--color-ink-1000);
+
+  --radius-lg: 12px;
+  --radius-md: calc(12px - 2px);
+  --radius-sm: calc(12px - 4px);
+}
+
+@layer base {
+
+  :root,
+  .dark {
+    font-family: var(--font-sans);
+    /* Font rendering improvements */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  .dark {
+    --color-ink-0: #141414;
+    --color-ink-100: color-mix(in srgb, #FEFEFE 2%, transparent);
+    --color-ink-200: color-mix(in srgb, #FEFEFE 4%, transparent);
+    --color-ink-300: color-mix(in srgb, #FEFEFE 8%, transparent);
+    --color-ink-400: color-mix(in srgb, #FEFEFE 12%, transparent);
+    --color-ink-500: color-mix(in srgb, #FEFEFE 16%, transparent);
+    --color-ink-600: color-mix(in srgb, #FEFEFE 24%, transparent);
+    --color-ink-700: color-mix(in srgb, #FEFEFE 48%, transparent);
+    --color-ink-800: color-mix(in srgb, #FEFEFE 64%, transparent);
+    --color-ink-900: color-mix(in srgb, #FEFEFE 80%, transparent);
+    --color-ink-1000: #FEFEFE;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+}
+
+@layer utilities {
+
+  /* text-display: 240/100 */
+  .h0 {
+    font-family: var(--font-serif);
+    font-size: 15rem;
+    line-height: 100%;
+    font-weight: 400;
+  }
+
+  /* h1: 56/100 */
+  .h1 {
+    font-family: var(--font-serif);
+    font-size: 3rem;
+    line-height: 100%;
+    font-weight: 400;
+  }
+
+  /* h2: 32/100 */
+  .h2 {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    line-height: 140%;
+    font-weight: 400;
+  }
+
+  /* label: 12/130 - JetBrains Mono */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+
+  /* body: 14/170 - Regular */
+  .body, p, div, a, input, textarea, select {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+    font-weight: 400;
+  }
+
+  /* caption: 12/150 - Regular */
+  .label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    font-weight: 500;
+  }
+
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  svg {
+    stroke-width: 1.75; /* default is 2, try 1.5 or 1 for thinner */
+  }
+}
