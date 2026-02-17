@@ -29,22 +29,7 @@ const requestSchema = z.object({
 
 /** Map internal error signals to safe, user-facing error keys */
 /** Map internal error signals to safe, user-facing error keys */
-function classifyError(error: unknown): { errorKey: string; status: number } {
-    const err = error as any;
-    const status = err?.response?.status || err?.status;
-    const message = err?.message || "";
 
-    if (status === 403) {
-        return { errorKey: "QUOTA_EXCEEDED", status: 429 };
-    }
-    if (message.includes("disabled")) {
-        return { errorKey: "DISABLED", status: 400 };
-    }
-    if (message.includes("not found") || status === 404) {
-        return { errorKey: "NO_PUBLIC", status: 404 };
-    }
-    return { errorKey: "GENERIC_FAIL", status: 500 };
-}
 
 export async function POST(req: Request) {
     try {
@@ -156,7 +141,8 @@ export async function POST(req: Request) {
         });
 
     } catch (error: unknown) {
-        logger.error({ error }, "Error in comment extraction API");
+        // Use 'err' key for pino to correctly serialize Error objects
+        logger.error({ err: error }, "Error in comment extraction API");
 
         // Never leak internal error messages to the client
         const { errorKey, status } = classifyError(error);
@@ -169,4 +155,28 @@ export async function POST(req: Request) {
             { status }
         );
     }
+}
+
+/** Map internal error signals to safe, user-facing error keys */
+function classifyError(error: unknown): { errorKey: string; status: number } {
+    const err = error as any;
+    const status = err?.response?.status || err?.status;
+    const message = err?.message || "";
+
+    if (status === 403) {
+        return { errorKey: "QUOTA_EXCEEDED", status: 429 };
+    }
+    // Handle the specific error thrown by libs/youtube.ts
+    if (message.includes("YOUTUBE_API_KEY environment variable is not configured")) {
+        // Return 500 for config errors, but we can verify in logs. 
+        // For client, GENERIC_FAIL is appropriate as it's a server-side config issue.
+        return { errorKey: "GENERIC_FAIL", status: 500 };
+    }
+    if (message.includes("disabled")) {
+        return { errorKey: "DISABLED", status: 400 };
+    }
+    if (message.includes("not found") || status === 404) {
+        return { errorKey: "NO_PUBLIC", status: 404 };
+    }
+    return { errorKey: "GENERIC_FAIL", status: 500 };
 }
