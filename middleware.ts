@@ -30,10 +30,29 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  const token = await getToken({
+  // 2. CHECK: Token existence
+  // Try default NextAuth.js v4 cookie names
+  let token = await getToken({
     req,
     secret: process.env.NEXTAUTH_SECRET,
   });
+
+  // Fallback: Try NextAuth.js v5 cookie names
+  if (!token) {
+    if (req.cookies.has("__Secure-authjs.session-token")) {
+      token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "__Secure-authjs.session-token",
+      });
+    } else if (req.cookies.has("authjs.session-token")) {
+      token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: "authjs.session-token",
+      });
+    }
+  }
 
   if (!token) {
     if (pathname.startsWith("/api/")) {
