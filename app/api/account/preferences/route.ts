@@ -3,6 +3,7 @@ import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import { z } from "zod";
+import logger from "@/libs/logger";
 
 const preferencesSchema = z.object({
     exportFormat: z.enum(["csv", "xlsx", "json"]).optional(),
@@ -37,7 +38,7 @@ export async function GET() {
 
         return NextResponse.json({ data: user.preferences || {} });
     } catch (error) {
-        console.error("Error fetching preferences:", error);
+        logger.error({ error }, "Error fetching preferences");
         return NextResponse.json(
             { error: "Failed to fetch preferences" },
             { status: 500 }
@@ -116,7 +117,7 @@ export async function PUT(req: NextRequest) {
 
         return NextResponse.json({ data: user.preferences });
     } catch (error) {
-        console.error("Error saving preferences:", error);
+        logger.error({ error }, "Error saving preferences");
         return NextResponse.json(
             { error: "Failed to save preferences" },
             { status: 500 }

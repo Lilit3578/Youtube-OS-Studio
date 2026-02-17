@@ -5,6 +5,7 @@ import User from "@/models/User";
 import { extractVideoId, fetchComments } from "@/libs/youtube";
 import { z } from "zod";
 import { ERROR_MESSAGES } from "@/libs/constants/messages";
+import logger from "@/libs/logger";
 
 // Set max duration for API route to 60 seconds
 export const maxDuration = 60;
@@ -155,7 +156,7 @@ export async function POST(req: Request) {
         });
 
     } catch (error: unknown) {
-        console.error("Error in comment extraction API:", error);
+        logger.error({ error }, "Error in comment extraction API");
 
         // Never leak internal error messages to the client
         const { errorKey, status } = classifyError(error);

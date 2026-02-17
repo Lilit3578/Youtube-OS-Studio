@@ -4,6 +4,7 @@ import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import clientPromise from "@/libs/mongo";
 import { ObjectId } from "mongodb";
+import logger from "@/libs/logger";
 
 export async function DELETE() {
     try {
@@ -34,11 +35,10 @@ export async function DELETE() {
 
         return NextResponse.json({ success: true });
     } catch (error: any) {
-        console.error("[ACCOUNT_DELETE_ERROR]", {
-            message: error.message,
-            stack: error.stack,
+        logger.error({
+            error,
             user: (await auth())?.user?.email
-        });
+        }, "[ACCOUNT_DELETE_ERROR]");
         return NextResponse.json(
             { error: "Failed to delete account. Please try again later." },
             { status: 500 }

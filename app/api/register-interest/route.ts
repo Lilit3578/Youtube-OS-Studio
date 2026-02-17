@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import { Resend } from "resend";
 import { z } from "zod";
 import config, { toolsConfig } from "@/config";
+import { checkRateLimit } from "@/libs/rate-limit";
+import logger from "@/libs/logger";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -27,6 +29,14 @@ const requestSchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
+        // 1. Rate Limit Check (10 requests per minute)
+        const limitResult = await checkRateLimit(req, {
+            keyPrefix: "register_interest",
+            points: 10,
+            duration: 60,
+        });
+        if (limitResult) return limitResult;
+
         const session = await auth();
         if (!session?.user?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -84,36 +94,41 @@ export async function POST(req: NextRequest) {
             interests: toolId,
         });
 
-        // ONLY send email if we actually modified the document (i.e., it's a NEW interest)
+        // 2. Async Email Processing using Next.js 15 `after()`
+        // This runs AFTER the response is sent to the client.
         if (result.modifiedCount > 0 && process.env.ADMIN_EMAIL) {
-            const tool = toolsConfig.find((t) => t.id === toolId);
-            const toolName = tool ? tool.name : toolId;
+            after(async () => {
+                try {
+                    const tool = toolsConfig.find((t) => t.id === toolId);
+                    const toolName = tool ? tool.name : toolId;
 
-            await resend.emails.send({
-                from: config.resend.fromNoReply,
-                to: process.env.ADMIN_EMAIL,
-                subject: `Interest Registered: ${escapeHtml(toolName)} (${totalInterested} total)`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #171717;">New Interest Registration</h2>
+                    await resend.emails.send({
+                        from: config.resend.fromNoReply,
+                        to: process.env.ADMIN_EMAIL!,
+                        subject: `Interest Registered: ${escapeHtml(toolName)} (${totalInterested} total)`,
+                        html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2 style="color: #171717;">New Interest Registration</h2>
 
-                        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 8px 0;"><strong>Tool:</strong> ${escapeHtml(toolName)}</p>
-                            <p style="margin: 8px 0;"><strong>User:</strong> ${escapeHtml(session.user.name || "N/A")} (${escapeHtml(session.user.email)})</p>
+                            <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                                <p style="margin: 8px 0;"><strong>Tool:</strong> ${escapeHtml(toolName)}</p>
+                                <p style="margin: 8px 0;"><strong>User:</strong> ${escapeHtml(session.user?.name || "N/A")} (${escapeHtml(session.user?.email || "")})</p>
+                            </div>
+
+                            <div style="background: #0A68F5; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                                <p style="margin: 0; font-size: 32px; font-weight: bold;">${totalInterested}</p>
+                                <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.9;">total users interested</p>
+                            </div>
+
+                            <p style="color: #737373; font-size: 12px;">Registered: ${new Date().toISOString()}</p>
                         </div>
-
-                        <div style="background: #0A68F5; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
-                            <p style="margin: 0; font-size: 32px; font-weight: bold;">${totalInterested}</p>
-                            <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.9;">total users interested</p>
-                        </div>
-
-                        <p style="color: #737373; font-size: 12px;">Registered: ${new Date().toISOString()}</p>
-                    </div>
-                `,
+                    `,
+                    });
+                    logger.info({ toolId, email: session.user?.email }, "Interest notification sent");
+                } catch (err) {
+                    logger.error({ error: err }, "Background Email Error");
+                }
             });
-            // console.log("📧 Interest notification sent");
-        } else {
-            // console.log("ℹ️ Interest already registered, skipping email");
         }
 
         return NextResponse.json({
@@ -122,7 +137,7 @@ export async function POST(req: NextRequest) {
             alreadyRegistered: result.modifiedCount === 0
         });
     } catch (error) {
-        console.error("Error registering interest:", error);
+        logger.error({ error }, "Error registering interest");
         return NextResponse.json(
             { error: "Failed to register interest" },
             { status: 500 }

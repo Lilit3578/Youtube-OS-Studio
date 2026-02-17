@@ -9,12 +9,12 @@ const requiredServerEnvs = [
     "NEXTAUTH_SECRET",
     "GOOGLE_ID",
     "GOOGLE_SECRET",
-    // "RESEND_API_KEY", // Optional if email not used
-    // "YOUTUBE_API_KEY", // Optional if not using YouTube features immediately
+    "RESEND_API_KEY", // Optional if email not used
+    "YOUTUBE_API_KEY", // Optional if not using YouTube features immediately
 ] as const;
 
 const requiredClientEnvs = [
-    // Add public keys here if needed, e.g. "NEXT_PUBLIC_STRIPE_KEY"
+    "NEXT_PUBLIC_STRIPE_KEY"
 ] as const;
 
 export const validateEnv = () => {

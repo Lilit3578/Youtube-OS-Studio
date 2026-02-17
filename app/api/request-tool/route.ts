@@ -5,6 +5,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
+import logger from "@/libs/logger";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -187,7 +188,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ success: true });
     } catch (error) {
-        console.error("Error submitting tool request:", error);
+        logger.error({ error }, "Error submitting tool request");
         return NextResponse.json(
             { error: "Failed to submit request" },
             { status: 500 }

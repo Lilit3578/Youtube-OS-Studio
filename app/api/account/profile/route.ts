@@ -3,6 +3,7 @@ import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import { z } from "zod";
+import logger from "@/libs/logger";
 
 const profileSchema = z.object({
     name: z.string().min(1, "Name is required").max(100, "Name is too long").optional(),
@@ -72,11 +73,10 @@ export async function PUT(req: NextRequest) {
 
         return NextResponse.json({ data: updatedUser });
     } catch (error: any) {
-        console.error("[PROFILE_UPDATE_ERROR]", {
-            message: error.message,
-            stack: error.stack,
+        logger.error({
+            error,
             user: (await auth())?.user?.email
-        });
+        }, "[PROFILE_UPDATE_ERROR]");
         return NextResponse.json(
             { error: "Failed to update profile. Please try again later." },
             { status: 500 }
