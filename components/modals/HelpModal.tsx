@@ -6,6 +6,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,9 @@ export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
                     <DialogTitle className="text-foreground text-[20px] font-serif font-normal leading-[140%] text-left">
                         {content.title}
                     </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        {content.description}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {/* Content Section */}
@@ -53,22 +57,33 @@ export default function HelpModal({ isOpen, onClose, toolId }: HelpModalProps) {
 
                     {/* Video Embed Area */}
                     <div className="w-[480px] h-[270px] bg-muted/50 rounded-lg border border-border flex items-center justify-center overflow-hidden relative">
-                        {content.videoUrl ? (
-                            <iframe
-                                src={content.videoUrl}
-                                className="w-full h-full"
-                                sandbox="allow-scripts allow-same-origin allow-presentation"
-                                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title={`${content.title} tutorial video`}
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center justify-center gap-2 text-center p-4">
-                                <span className="text-[14px] text-muted-foreground font-medium">
-                                    Video tutorial coming soon
-                                </span>
-                            </div>
-                        )}
+                        {(() => {
+                            const embedUrl = content.videoUrl
+                                ? (() => {
+                                    // eslint-disable-next-line no-useless-escape
+                                    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+                                    const match = content.videoUrl.match(regex);
+                                    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+                                })()
+                                : null;
+
+                            return embedUrl ? (
+                                <iframe
+                                    src={embedUrl}
+                                    className="w-full h-full"
+                                    sandbox="allow-scripts allow-same-origin allow-presentation"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    title={`${content.title} tutorial video`}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center gap-2 text-center p-4">
+                                    <span className="text-[14px] text-muted-foreground font-medium">
+                                        Video tutorial coming soon
+                                    </span>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
 

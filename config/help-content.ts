@@ -13,12 +13,12 @@ export const helpContent: Record<string, ToolHelpContent> = {
     comments: {
         title: "extract comments",
         description: "Enter a YouTube URL to extract the TOP 100 comments based on relevance. You can export results as CSV or XLSX!",
-        videoUrl: ""
+        videoUrl: "https://youtu.be/LMzi29gbpBU"
     },
     thumbnail: {
         title: "compress thumbnail",
         description: "Upload your thumbnail image to resize and compress it to YouTube's recommended standards. Download optimized versions instantly for better performance.",
-        videoUrl: ""
+        videoUrl: "https://youtu.be/bxlXE3r5GH8"
     },
     qr: {
         title: "generate qr code",
