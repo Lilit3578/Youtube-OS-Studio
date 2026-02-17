@@ -172,6 +172,10 @@ function classifyError(error: unknown): { errorKey: string; status: number } {
         // For client, GENERIC_FAIL is appropriate as it's a server-side config issue.
         return { errorKey: "GENERIC_FAIL", status: 500 };
     }
+    // Handle the specific error thrown by libs/youtube.ts (quota or invalid key)
+    if (message.includes("YouTube API quota exceeded")) {
+        return { errorKey: "QUOTA_EXCEEDED", status: 429 };
+    }
     if (message.includes("disabled")) {
         return { errorKey: "DISABLED", status: 400 };
     }
