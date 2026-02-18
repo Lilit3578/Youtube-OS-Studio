@@ -22,14 +22,27 @@ const extractVideoIdClient = (url: string): string | null => {
 /** Sanitize text for CSV/Excel formula injection. */
 const sanitizeForExport = (text: string): string => {
     if (typeof text !== "string") return text;
-    // Remove control characters that can break CSV cell boundaries
-    let cleaned = text.replace(/[\r\n\t]/g, " ");
-    // Prefix dangerous leading characters
+    // Remove control characters — replace \r\n as a unit first to avoid double spaces
+    let cleaned = text.replace(/\r\n/g, " ").replace(/[\r\n\t]/g, " ");
+    // Prefix dangerous leading characters to prevent formula injection
     const unsafeChars = ["=", "+", "-", "@", "|", "\\"];
     if (unsafeChars.some((char) => cleaned.startsWith(char))) {
         cleaned = "'" + cleaned;
     }
     return cleaned;
+};
+
+/** Format an ISO 8601 date string into a human-readable local date. */
+const formatDate = (isoString: string): string => {
+    try {
+        return new Date(isoString).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+    } catch {
+        return isoString;
+    }
 };
 
 export default function CommentExplorerPage() {
@@ -59,6 +72,7 @@ export default function CommentExplorerPage() {
         setHasSearched(true);
         setError(null);
         setComments([]);
+        setFilter("all"); // Reset filter on every new fetch so users don't land on an empty tab
         setCounts({ total: 0, question: 0, request: 0, feedback: 0, other: 0 });
 
         try {
@@ -106,10 +120,19 @@ export default function CommentExplorerPage() {
         }
     }, []);
 
-    // Auto-fetch only when a complete, valid 11-char video ID is detected
+    // Auto-fetch when a complete, valid 11-char video ID is detected.
+    // When the URL is cleared or changed to an invalid URL, reset lastFetchedVideoId
+    // so that re-typing the same URL will correctly trigger a new fetch.
     useEffect(() => {
         const videoId = extractVideoIdClient(url);
-        if (!videoId || videoId === lastFetchedVideoId.current) return;
+
+        if (!videoId) {
+            // URL cleared or invalid — reset the dedup guard
+            lastFetchedVideoId.current = null;
+            return;
+        }
+
+        if (videoId === lastFetchedVideoId.current) return;
 
         const timer = setTimeout(() => {
             lastFetchedVideoId.current = videoId;
@@ -142,7 +165,7 @@ export default function CommentExplorerPage() {
 
         const dataToExport = filteredComments.map((c, index) => ({
             Line: index + 1,
-            Date: sanitizeForExport(c.publishedAt),
+            Date: sanitizeForExport(formatDate(c.publishedAt)),
             Likes: c.likeCount,
             Replies: c.replyCount,
             Intent: sanitizeForExport(c.intent),

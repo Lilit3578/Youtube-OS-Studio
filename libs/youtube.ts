@@ -91,10 +91,33 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
 
         if (!res.ok) {
             if (res.status === 403) {
-                throw new Error("YouTube API quota exceeded or API key invalid");
+                // Inspect the response body to distinguish quota from invalid/restricted key
+                let reason = "unknown";
+                try {
+                    const errBody = await res.json() as { error?: { errors?: { reason?: string }[] } };
+                    reason = errBody?.error?.errors?.[0]?.reason ?? "unknown";
+                } catch { /* ignore parse errors */ }
+
+                if (reason === "quotaExceeded" || reason === "rateLimitExceeded") {
+                    throw new Error("YouTube API quota exceeded");
+                }
+                // keyInvalid, forbidden, accessNotConfigured, etc.
+                throw new Error("YouTube API key invalid or not authorized");
             }
             if (res.status === 404) {
-                throw new Error("Video not found or comments are disabled");
+                throw new Error("Video not found");
+            }
+            // Comments disabled returns 403 with commentsDisabled reason — handled above.
+            // Some videos return 400 with commentsDisabled in the error body.
+            if (res.status === 400) {
+                let reason = "unknown";
+                try {
+                    const errBody = await res.json() as { error?: { errors?: { reason?: string }[] } };
+                    reason = errBody?.error?.errors?.[0]?.reason ?? "unknown";
+                } catch { /* ignore */ }
+                if (reason === "commentsDisabled") {
+                    throw new Error("Comments are disabled for this video");
+                }
             }
             throw new Error(`YouTube API error: ${res.status}`);
         }
@@ -135,10 +158,12 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
         return comments;
     } catch (error: unknown) {
         const err = error as { message?: string };
-        // Re-throw known errors (quota, not found) without extra logging
+        // Re-throw known errors without extra logging
         if (
             err?.message?.includes("YouTube API quota exceeded") ||
+            err?.message?.includes("YouTube API key invalid") ||
             err?.message?.includes("Video not found") ||
+            err?.message?.includes("Comments are disabled") ||
             err?.message?.includes("YOUTUBE_API_KEY")
         ) {
             throw error;

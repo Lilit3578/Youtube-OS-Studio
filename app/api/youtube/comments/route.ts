@@ -191,27 +191,26 @@ export async function POST(req: NextRequest) {
 
 /** Map internal error signals to safe, user-facing error keys */
 function classifyError(error: unknown): { errorKey: string; status: number } {
-    const err = error as any;
+    const err = error as { response?: { status?: number }; status?: number; message?: string };
     const status = err?.response?.status || err?.status;
     const message = err?.message || "";
 
-    if (status === 403) {
+    if (status === 403 || message.includes("YouTube API quota exceeded")) {
         return { errorKey: "QUOTA_EXCEEDED", status: 429 };
     }
-    // Handle the specific error thrown by libs/youtube.ts
-    if (message.includes("YOUTUBE_API_KEY environment variable is not configured")) {
-        // Return 500 for config errors, but we can verify in logs. 
-        // For client, GENERIC_FAIL is appropriate as it's a server-side config issue.
+    // Invalid or misconfigured API key — server-side config error, not a quota issue
+    if (message.includes("YouTube API key invalid") || message.includes("not authorized")) {
         return { errorKey: "GENERIC_FAIL", status: 500 };
     }
-    // Handle the specific error thrown by libs/youtube.ts (quota or invalid key)
-    if (message.includes("YouTube API quota exceeded")) {
-        return { errorKey: "QUOTA_EXCEEDED", status: 429 };
+    if (message.includes("YOUTUBE_API_KEY environment variable is not configured")) {
+        return { errorKey: "GENERIC_FAIL", status: 500 };
     }
-    if (message.includes("disabled")) {
+    // Comments explicitly disabled on this video
+    if (message.includes("Comments are disabled")) {
         return { errorKey: "DISABLED", status: 400 };
     }
-    if (message.includes("not found") || status === 404) {
+    // Video does not exist
+    if (message.includes("Video not found") || status === 404) {
         return { errorKey: "NO_PUBLIC", status: 404 };
     }
     return { errorKey: "GENERIC_FAIL", status: 500 };

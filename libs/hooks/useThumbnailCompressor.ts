@@ -72,38 +72,38 @@ export function useThumbnailCompressor() {
     const addFiles = useCallback(async (fileInputs: { file: File; validationError: string | null }[]) => {
         if (fileInputs.length === 0) return;
 
-        // 1. Create initial items
-        // PREPEND items (Newest -> Oldest) logic: [newItems, ...prev]
+        // 1. Compute items and valid-files list in a plain loop.
+        // IMPORTANT: Do NOT do this inside the setItems updater — React Strict Mode
+        // calls updater functions twice, which would double-populate validFilesToCompress
+        // and cause every file to be compressed twice.
         const validFilesToCompress: { file: File; id: string }[] = [];
+        const newItems: ProcessedImageItemDetails[] = fileInputs.map(({ file, validationError }) => {
+            const id = Math.random().toString(36).substring(7);
 
-        setItems((prevItems) => {
-            const newItems: ProcessedImageItemDetails[] = fileInputs.map(({ file, validationError }) => {
-                const id = Math.random().toString(36).substring(7);
-
-                if (validationError) {
-                    return {
-                        id,
-                        file,
-                        originalFile: file, // Store original
-                        blob: null,
-                        status: "error",
-                        errorMsg: validationError
-                    };
-                }
-
-                // If no validation error, mark for compression
-                validFilesToCompress.push({ file, id });
-
+            if (validationError) {
                 return {
                     id,
-                    file, // This will be updated with processed file later
-                    originalFile: file, // Store the truly original file
+                    file,
+                    originalFile: file,
                     blob: null,
-                    status: "processing",
+                    status: "error" as const,
+                    errorMsg: validationError
                 };
-            });
-            return [...newItems, ...prevItems];
+            }
+
+            validFilesToCompress.push({ file, id });
+
+            return {
+                id,
+                file,
+                originalFile: file,
+                blob: null,
+                status: "processing" as const,
+            };
         });
+
+        // PREPEND items (Newest -> Oldest): [newItems, ...prev]
+        setItems((prevItems) => [...newItems, ...prevItems]);
 
         if (validFilesToCompress.length === 0) return;
 

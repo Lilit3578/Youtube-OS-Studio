@@ -54,8 +54,11 @@ export default function ImageCompressor() {
     const onFilesSelected = useCallback((files: File[]) => {
         if (files.length === 0) return;
 
-        // Limit number of files per batch
+        // Limit number of files per batch — warn the user if we had to truncate
         const filesToProcess = files.slice(0, MAX_FILE_COUNT);
+        if (files.length > MAX_FILE_COUNT) {
+            toast.error(`Only ${MAX_FILE_COUNT} images can be processed at once. ${files.length - MAX_FILE_COUNT} file(s) were skipped.`);
+        }
 
         const filesWithValidation = filesToProcess.map(file => ({
             file,
@@ -82,7 +85,10 @@ export default function ImageCompressor() {
 
     const handleDownloadAll = async (format: "png" | "jpg") => {
         const completedItems = items.filter(item => item.status === "done" && item.blob);
-        if (completedItems.length === 0) return;
+        if (completedItems.length === 0) {
+            toast.error("No completed images to download yet.");
+            return;
+        }
 
         try {
             const JSZip = (await import("jszip")).default;
@@ -103,7 +109,9 @@ export default function ImageCompressor() {
             const url = URL.createObjectURL(content);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `compressed-thumbnails-${format}.zip`;
+            // Use a generic name — the format param only affects the user's selection label,
+            // not the actual file contents (extensions are derived from blob MIME type above).
+            a.download = `compressed-thumbnails.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
