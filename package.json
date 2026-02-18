@@ -53,6 +53,9 @@
     "write-excel-file": "^2.3.10",
     "zod": "^4.0.15"
   },
+  "overrides": {
+    "glob": "^13.0.0"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
     "@types/jszip": "^3.4.0",
