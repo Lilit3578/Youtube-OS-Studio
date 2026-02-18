@@ -10,6 +10,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
+      // UI Avatars (used for fallback profile images)
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
+      },
     ],
   },
   async headers() {

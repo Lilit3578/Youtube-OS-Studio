@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import ExcelJS from "exceljs";
+import writeXlsxFile from "write-excel-file";
 
 import UrlInputSection from "@/components/tools/comments/UrlInputSection";
 import CommentsHeader from "@/components/tools/comments/CommentsHeader";
@@ -196,34 +196,23 @@ export default function CommentExplorerPage() {
             document.body.removeChild(link);
             URL.revokeObjectURL(blobUrl);
         } else {
-            // Excel export via exceljs
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet("Comments");
-
-            worksheet.columns = [
-                { header: "Line", key: "Line", width: 8 },
-                { header: "Date", key: "Date", width: 22 },
-                { header: "Likes", key: "Likes", width: 8 },
-                { header: "Replies", key: "Replies", width: 10 },
-                { header: "Intent", key: "Intent", width: 12 },
-                { header: "Comment", key: "Comment", width: 80 },
+            // Excel export via write-excel-file
+            const schema = [
+                { column: "Line", type: Number, value: (row: any) => row.Line, width: 8 },
+                { column: "Date", type: String, value: (row: any) => row.Date, width: 22 },
+                { column: "Likes", type: Number, value: (row: any) => row.Likes, width: 8 },
+                { column: "Replies", type: Number, value: (row: any) => row.Replies, width: 10 },
+                { column: "Intent", type: String, value: (row: any) => row.Intent, width: 12 },
+                { column: "Comment", type: String, value: (row: any) => row.Comment, width: 80 },
             ];
 
-            worksheet.getRow(1).font = { bold: true };
-            worksheet.addRows(dataToExport);
-
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], {
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            await writeXlsxFile(dataToExport, {
+                schema,
+                fileName: "youtube_comments.xlsx",
+                headerStyle: {
+                    fontWeight: "bold"
+                }
             });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "youtube_comments.xlsx";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
         }
     };
 
