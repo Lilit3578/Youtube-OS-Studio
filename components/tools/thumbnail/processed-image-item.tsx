@@ -59,10 +59,13 @@ export default function ProcessedImageItem({
     }, [originalFile, processedBlob, status, isComparing]);
 
     // 2. Real math calculation
+    // NOTE: We compare against `originalFile.size` (the user's actual upload),
+    // NOT `processedFile.size` (the canvas-resized PNG intermediate which is
+    // always larger than the source JPEG and would produce incorrect +0% results).
     const stats = useMemo(() => {
         if (!processedBlob || status !== "done") return null;
 
-        const orig = processedFile.size;
+        const orig = originalFile.size; // ← user's original upload
         const comp = processedBlob.size;
         const savingsBytes = orig - comp;
         const savingsPercent = Math.round((savingsBytes / orig) * 100);
@@ -73,24 +76,57 @@ export default function ProcessedImageItem({
             percent: savingsPercent > 0 ? `-${savingsPercent}% Compression` : `+${Math.abs(savingsPercent)}% Size Increase`,
             isSavings: savingsPercent > 0
         };
-    }, [processedFile, processedBlob, status]);
+    }, [originalFile, processedBlob, status]);
 
     // 3. Download Handler
+    // Re-encodes to the correct format via canvas to avoid mislabeled files
+    // (e.g. a JPEG blob saved with a .png extension would be a broken file).
     const handleDownload = (format: "png" | "jpg") => {
         if (!processedBlob) return;
 
         const nameWithoutExt = processedFile.name.substring(0, processedFile.name.lastIndexOf(".")) || processedFile.name;
         const extension = format === "png" ? ".png" : ".jpg";
         const fullFilename = `${nameWithoutExt}-optimized${extension}`;
+        const mimeType = format === "png" ? "image/png" : "image/jpeg";
 
-        const url = URL.createObjectURL(processedBlob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fullFilename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        // If the blob is already the right type, download directly
+        if (processedBlob.type === mimeType) {
+            const url = URL.createObjectURL(processedBlob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fullFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        }
+
+        // Re-encode via canvas to produce the correct format
+        const img = new window.Image();
+        const srcUrl = URL.createObjectURL(processedBlob);
+        img.onload = () => {
+            URL.revokeObjectURL(srcUrl);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob((blob) => {
+                if (!blob) return;
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fullFilename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, mimeType, format === "jpg" ? 0.92 : undefined);
+        };
+        img.onerror = () => URL.revokeObjectURL(srcUrl);
+        img.src = srcUrl;
     };
 
     return (

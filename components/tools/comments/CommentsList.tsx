@@ -8,9 +8,10 @@ interface CommentsListProps {
     comments: Comment[];
     loading: boolean;
     hasSearched: boolean;
+    hasError?: boolean;
 }
 
-export default function CommentsList({ comments, loading, hasSearched }: CommentsListProps) {
+export default function CommentsList({ comments, loading, hasSearched, hasError }: CommentsListProps) {
     if (loading) {
         return (
             <div className="py-12 text-center text-ink-700 body animate-pulse">
@@ -19,7 +20,8 @@ export default function CommentsList({ comments, loading, hasSearched }: Comment
         );
     }
 
-    if (comments.length === 0 && hasSearched) {
+    // Don't show the empty state if an error is already displayed above
+    if (comments.length === 0 && hasSearched && !hasError) {
         return (
             <div className="py-12 text-center text-ink-700 body">
                 No comments found matching the criteria.

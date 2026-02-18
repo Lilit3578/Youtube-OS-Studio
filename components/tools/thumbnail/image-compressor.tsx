@@ -21,7 +21,7 @@ import { formatBytes } from "@/libs/utils";
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@/libs/constants/messages";
 
 export default function ImageCompressor() {
-    const { items, addFiles } = useThumbnailCompressor();
+    const { items, addFiles, isCompressing } = useThumbnailCompressor();
     const [isDragging, setIsDragging] = useState(false);
 
     // --- Upload Logic (Inlined) ---
@@ -91,8 +91,10 @@ export default function ImageCompressor() {
             completedItems.forEach((item) => {
                 if (item.blob) {
                     const nameWithoutExt = item.file.name.substring(0, item.file.name.lastIndexOf(".")) || item.file.name;
-                    const extension = format === "png" ? ".png" : ".jpg";
-                    const fullFilename = `${nameWithoutExt}-optimized${extension}`;
+                    // Derive extension from the blob's actual MIME type — not the user-selected
+                    // format — to avoid mislabeled files (e.g. a JPEG blob named .png).
+                    const actualExtension = item.blob.type === "image/png" ? ".png" : ".jpg";
+                    const fullFilename = `${nameWithoutExt}-optimized${actualExtension}`;
                     zip.file(fullFilename, item.blob);
                 }
             });
@@ -108,7 +110,6 @@ export default function ImageCompressor() {
             URL.revokeObjectURL(url);
             toast.success(SUCCESS_MESSAGES.DOWNLOAD.ALL_IMAGES);
         } catch (error) {
-            console.error("Failed to create zip:", error);
             toast.error(ERROR_MESSAGES.TOOLS.THUMBNAIL.ZIP_FAILED);
         }
     };
@@ -119,13 +120,16 @@ export default function ImageCompressor() {
             {/* Upload Zone */}
             <div
                 className={cn(
-                    "w-full bg-ink-200 border border-ink-300 border-dashed rounded-md flex flex-col justify-center items-center gap-4 p-10 transition-colors duration-200 cursor-pointer hover:bg-ink-300",
-                    isDragging ? "border-primary bg-ink-300" : ""
+                    "w-full bg-ink-200 border border-ink-300 border-dashed rounded-md flex flex-col justify-center items-center gap-4 p-10 transition-colors duration-200",
+                    isCompressing
+                        ? "opacity-50 cursor-not-allowed pointer-events-none"
+                        : "cursor-pointer hover:bg-ink-300",
+                    isDragging && !isCompressing ? "border-primary bg-ink-300" : ""
                 )}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => document.getElementById("thumbnail-upload-input")?.click()}
+                onDragOver={isCompressing ? undefined : handleDragOver}
+                onDragLeave={isCompressing ? undefined : handleDragLeave}
+                onDrop={isCompressing ? undefined : handleDrop}
+                onClick={() => !isCompressing && document.getElementById("thumbnail-upload-input")?.click()}
             >
                 <div>
                     <FileImage />
@@ -147,6 +151,7 @@ export default function ImageCompressor() {
                     className="hidden"
                     onChange={handleInputChange}
                     multiple
+                    disabled={isCompressing}
                 />
             </div>
 

@@ -103,9 +103,37 @@ export async function POST(req: NextRequest) {
             }
         );
 
-        // Atomic Increment with Condition (MED-01 Fix)
-        // We use findOneAndUpdate to ensure we only increment IF the key is still under the limit.
-        // This prevents the "check-then-act" race condition.
+        // Check quota BEFORE fetching — but do NOT increment yet.
+        // We only burn a credit on a successful YouTube API response.
+        const currentUser = await User.findOne(
+            { email: session.user.email },
+            { "usage.commentExplorer.count": 1 }
+        );
+
+        if (!currentUser) {
+            return NextResponse.json(
+                { error: "User not found", errorKey: "GENERIC_FAIL" },
+                { status: 404 }
+            );
+        }
+
+        const currentCount = currentUser.usage?.commentExplorer?.count ?? 0;
+        if (currentCount >= DAILY_LIMIT) {
+            return NextResponse.json(
+                {
+                    error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
+                    errorKey: "QUOTA_EXCEEDED",
+                },
+                { status: 429 }
+            );
+        }
+
+        // Fetch comments FIRST — only charge the user on success
+        const comments = await fetchComments(videoId);
+
+        // Atomic increment — only after a successful YouTube API response.
+        // Uses a conditional update to guard against a race condition where two
+        // concurrent requests both pass the check above simultaneously.
         const updatedUser = await User.findOneAndUpdate(
             {
                 email: session.user.email,
@@ -118,8 +146,8 @@ export async function POST(req: NextRequest) {
         );
 
         if (!updatedUser) {
-            // If the update returned null, it means the condition (count < limit) failed OR user doesn't exist
-            // We assume it's a quota issue for safety in high-load scenarios.
+            // Race condition: another concurrent request pushed the count to the limit
+            // between our check and this update. Return quota error.
             return NextResponse.json(
                 {
                     error: ERROR_MESSAGES.TOOLS.COMMENTS.QUOTA_EXCEEDED,
@@ -128,9 +156,6 @@ export async function POST(req: NextRequest) {
                 { status: 429 }
             );
         }
-
-        // Fetch comments
-        const comments = await fetchComments(videoId);
 
         // Calculate counts
         const counts = {

@@ -91,10 +91,6 @@ export default function CommentExplorerPage() {
                 other: resTypes.counts.other
             });
         } catch (err) {
-            // HIGH-04 Fix: Robust error handling
-            // If component unmounts, state updates will warn/fail, but at least we catch specific errors
-            console.error("Failed to fetch comments:", err);
-
             if (err instanceof SyntaxError) {
                 setError("Received invalid response from server");
             } else if (err instanceof TypeError) {
@@ -140,9 +136,11 @@ export default function CommentExplorerPage() {
     };
 
     const handleDownload = async (format: "csv" | "excel") => {
-        if (comments.length === 0) return;
+        // Export the currently-filtered view (WYSIWYG) rather than all comments.
+        // If the user is on the "questions" tab, they get only questions exported.
+        if (filteredComments.length === 0) return;
 
-        const dataToExport = comments.map((c, index) => ({
+        const dataToExport = filteredComments.map((c, index) => ({
             Line: index + 1,
             Date: sanitizeForExport(c.publishedAt),
             Likes: c.likeCount,
@@ -199,7 +197,9 @@ export default function CommentExplorerPage() {
             const link = document.createElement("a");
             link.href = url;
             link.download = "youtube_comments.xlsx";
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
     };
@@ -240,6 +240,7 @@ export default function CommentExplorerPage() {
                 comments={filteredComments}
                 loading={loading}
                 hasSearched={hasSearched}
+                hasError={!!error}
             />
 
             {/* Branding Compliance */}

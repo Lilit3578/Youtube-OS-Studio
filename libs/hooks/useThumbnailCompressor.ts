@@ -58,7 +58,6 @@ export function useThumbnailCompressor() {
             return { blob: compressedBlob, hasResolutionWarning };
 
         } catch (error) {
-            console.error("Compression failed:", error);
             const message = error instanceof Error ? error.message : ERROR_MESSAGES.TOOLS.THUMBNAIL.GENERIC_FAIL;
 
             // Re-throw with our specific messages if they aren't already
@@ -75,13 +74,11 @@ export function useThumbnailCompressor() {
 
         // 1. Create initial items
         // PREPEND items (Newest -> Oldest) logic: [newItems, ...prev]
-        const newEntryIds: string[] = [];
         const validFilesToCompress: { file: File; id: string }[] = [];
 
         setItems((prevItems) => {
             const newItems: ProcessedImageItemDetails[] = fileInputs.map(({ file, validationError }) => {
                 const id = Math.random().toString(36).substring(7);
-                newEntryIds.push(id);
 
                 if (validationError) {
                     return {
@@ -114,7 +111,6 @@ export function useThumbnailCompressor() {
 
         // 2. Process files with Concurrency Limit (Max 3)
         const CONCURRENCY_LIMIT = 3;
-        const executing: Promise<void>[] = [];
 
         // Map valid files to task functions
         const tasks = validFilesToCompress.map(({ file, id }) => async () => {
@@ -160,11 +156,7 @@ export function useThumbnailCompressor() {
         // Safe Concurrency Execution using p-limit pattern (HIGH-03 Fix)
         // Replaced the manual `while` loop which was prone to race conditions/stalls
         const runTask = async (task: () => Promise<void>) => {
-            try {
-                await task();
-            } catch (e) {
-                console.error("Task execution failed unexpectedly", e);
-            }
+            await task();
         };
 
         // Simple batching to limit concurrency to 3
