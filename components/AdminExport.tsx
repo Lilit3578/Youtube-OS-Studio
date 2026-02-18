@@ -80,7 +80,7 @@ export default function AdminExport({ users }: { users: AdminUser[] }) {
         <button
             onClick={handleExport}
             disabled={loading}
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm cursor-pointer"
         >
             {loading ? "Exporting..." : "Export CSV"}
         </button>

@@ -151,7 +151,7 @@ export default function Error({
         </p>
 
         <div className="flex flex-wrap gap-4 justify-center">
-          <button className="btn btn-sm" onClick={reset}>
+          <button className="btn btn-sm cursor-pointer" onClick={reset}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
@@ -167,7 +167,7 @@ export default function Error({
             Refresh
           </button>
           <ButtonSupport />
-          <Link href="/" className="btn btn-sm">
+          <Link href="/" className="btn btn-sm cursor-pointer">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
