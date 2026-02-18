@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/libs/next-auth";
+import type { Session } from "next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import clientPromise from "@/libs/mongo";
@@ -7,8 +8,10 @@ import { ObjectId } from "mongodb";
 import logger from "@/libs/logger";
 
 export async function DELETE() {
+    // Declared outside try so the catch block can log the user email
+    let session: Session | null = null;
     try {
-        const session = await auth();
+        session = await auth();
 
         if (!session?.user?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -34,10 +37,10 @@ export async function DELETE() {
         }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error({
-            error,
-            user: (await auth())?.user?.email
+            err: error,
+            user: session?.user?.email
         }, "[ACCOUNT_DELETE_ERROR]");
         return NextResponse.json(
             { error: "Failed to delete account. Please try again later." },

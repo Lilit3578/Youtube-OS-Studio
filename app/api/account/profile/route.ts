@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/libs/next-auth";
+import type { Session } from "next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import { z } from "zod";
@@ -11,8 +12,11 @@ const profileSchema = z.object({
 });
 
 export async function PUT(req: NextRequest) {
+    // Declared outside try so the catch block can log the user email
+    let session: Session | null = null;
     try {
-        const session = await auth();
+        session = await auth();
+
         if (!session?.user?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -50,7 +54,7 @@ export async function PUT(req: NextRequest) {
             }
         }
 
-        const updateData: Record<string, any> = {};
+        const updateData: Partial<{ name: string; email: string }> = {};
         if (name !== undefined) updateData.name = name;
         if (email !== undefined) updateData.email = email;
 
@@ -72,10 +76,10 @@ export async function PUT(req: NextRequest) {
         }
 
         return NextResponse.json({ data: updatedUser });
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error({
-            error,
-            user: (await auth())?.user?.email
+            err: error,
+            user: session?.user?.email
         }, "[PROFILE_UPDATE_ERROR]");
         return NextResponse.json(
             { error: "Failed to update profile. Please try again later." },

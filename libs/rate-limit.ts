@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { RateLimiterMongo } from "rate-limiter-flexible";
+import { RateLimiterMongo, RateLimiterMemory } from "rate-limiter-flexible";
 import mongoose from "mongoose";
 import connectMongo from "@/libs/mongoose";
 import logger from "@/libs/logger";
@@ -7,11 +7,27 @@ import logger from "@/libs/logger";
 // Global cache for limiters to prevent re-initialization on hot reloads
 const limiters: Record<string, RateLimiterMongo> = {};
 
+// In-memory fallback limiters — activated when MongoDB is unavailable.
+// These are intentionally more permissive (reset on server restart, not
+// shared across instances) but prevent the endpoint from failing fully open.
+const memoryFallbacks: Record<string, RateLimiterMemory> = {};
+
 interface RateLimitOptions {
     keyPrefix: string;
     points: number; // Number of requests
     duration: number; // Per seconds
 }
+
+const getMemoryFallback = (config: RateLimitOptions): RateLimiterMemory => {
+    if (!memoryFallbacks[config.keyPrefix]) {
+        memoryFallbacks[config.keyPrefix] = new RateLimiterMemory({
+            keyPrefix: config.keyPrefix,
+            points: config.points,
+            duration: config.duration,
+        });
+    }
+    return memoryFallbacks[config.keyPrefix];
+};
 
 export const getRateLimiter = async ({
     keyPrefix,
@@ -42,6 +58,10 @@ export const getRateLimiter = async ({
 /**
  * Helper to check rate limit in API routes.
  * Returns null if allowed, or a NextResponse if blocked/error.
+ *
+ * Uses MongoDB-backed rate limiting when available.
+ * Falls back to an in-memory limiter if MongoDB is unavailable,
+ * ensuring the endpoint is never fully unprotected.
  */
 export const checkRateLimit = async (
     req: NextRequest,
@@ -51,19 +71,25 @@ export const checkRateLimit = async (
         duration: 60,
     }
 ): Promise<NextResponse | null> => {
+    // Use IP from headers or a fallback
+    // In production (Vercel/AWS), x-forwarded-for is standard.
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "127.0.0.1";
+
     try {
         const limiter = await getRateLimiter(config);
 
-        // Fail Open: If limiter init failed (e.g. DB down), just allow traffic
-        if (!limiter) return null;
+        if (limiter) {
+            // DB-backed limiter available — use it
+            await limiter.consume(ip);
+            return null;
+        }
 
-        // Use IP from headers or a fallback
-        // In production (Vercel/AWS), x-forwarded-for is standard.
-        const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
-
-        await limiter.consume(ip);
-
+        // DB unavailable — fall back to in-memory limiter
+        logger.warn({ keyPrefix: config.keyPrefix }, "MongoDB rate limiter unavailable, using in-memory fallback");
+        const fallback = getMemoryFallback(config);
+        await fallback.consume(ip);
         return null;
+
     } catch (rejRes) {
         // Check if it's a rate limiter rejection (has msBeforeNext)
         if (rejRes instanceof Error) {
@@ -72,7 +98,7 @@ export const checkRateLimit = async (
             return null;
         }
 
-        // It is a rate limit error
+        // It is a rate limit rejection
         return NextResponse.json(
             { error: "Too Many Requests. Please try again later." },
             { status: 429 }

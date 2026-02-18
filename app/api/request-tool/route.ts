@@ -85,44 +85,46 @@ export async function POST(req: NextRequest) {
         const data = validation.data;
 
         // Rate limiting: max 5 tool requests per user per day
+        // ATOMIC FIX: Mirrors the safe pattern used in the comments route.
+        // Step 1: Reset stale counter atomically if it's a new day.
         await connectMongo();
         const now = new Date();
         const startOfDay = new Date(
             Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
         );
 
-        const user = await User.findOne({ email: session.user.email });
-        if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
+        await User.updateOne(
+            {
+                email: session.user.email,
+                "usage.toolRequests.lastResetDate": { $lt: startOfDay },
+            },
+            {
+                $set: {
+                    "usage.toolRequests.count": 0,
+                    "usage.toolRequests.lastResetDate": now,
+                },
+            }
+        );
 
-        const requestUsage = user.usage?.toolRequests || {
-            count: 0,
-            lastResetDate: new Date(0),
-        };
-        const lastReset = new Date(requestUsage.lastResetDate);
+        // Step 2: Atomic increment with condition — only succeeds if under limit.
+        // If the user doesn't exist OR is at/over the limit, returns null.
+        const updatedUser = await User.findOneAndUpdate(
+            {
+                email: session.user.email,
+                "usage.toolRequests.count": { $lt: DAILY_REQUEST_LIMIT },
+            },
+            {
+                $inc: { "usage.toolRequests.count": 1 },
+            },
+            { new: true }
+        );
 
-        // Reset counter if it's a new day
-        if (lastReset < startOfDay) {
-            requestUsage.count = 0;
-            requestUsage.lastResetDate = now;
-        }
-
-        if (requestUsage.count >= DAILY_REQUEST_LIMIT) {
+        if (!updatedUser) {
             return NextResponse.json(
                 { error: "Daily request limit reached. Please try again tomorrow." },
                 { status: 429 }
             );
         }
-
-        // Increment atomically
-        await User.updateOne(
-            { email: session.user.email },
-            {
-                $inc: { "usage.toolRequests.count": 1 },
-                $set: { "usage.toolRequests.lastResetDate": now },
-            }
-        );
 
         // Sanitize all user-supplied fields before HTML interpolation
         const safe = {

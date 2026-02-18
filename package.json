@@ -23,6 +23,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@types/exceljs": "^0.5.3",
     "axios": "^1.11.0",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
@@ -30,7 +31,7 @@
     "crisp-sdk-web": "^1.0.22",
     "eslint": "^9.32.0",
     "eslint-config-next": "^15.4.6",
-    "googleapis": "^170.0.0",
+    "exceljs": "^4.4.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
     "mongodb": "^6.18.0",
@@ -50,7 +51,6 @@
     "resend": "^6.0.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "xlsx": "^0.18.5",
     "zod": "^4.0.15"
   },
   "devDependencies": {

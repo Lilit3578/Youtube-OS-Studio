@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,9 +77,9 @@ export default function RequestToolModal({ isOpen, onClose }: RequestToolModalPr
                         <DialogTitle className="text-[20px] leading-[28px] font-serif font-normal text-foreground">
                             Request a Tool
                         </DialogTitle>
-                        <p className="body text-muted-foreground mt-1">
+                        <DialogDescription className="body text-muted-foreground mt-1">
                             Help us build what you need!
-                        </p>
+                        </DialogDescription>
                     </div>
                 </DialogHeader>
 

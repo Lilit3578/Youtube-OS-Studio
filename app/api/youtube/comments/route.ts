@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
@@ -6,6 +6,7 @@ import { extractVideoId, fetchComments } from "@/libs/youtube";
 import { z } from "zod";
 import { ERROR_MESSAGES } from "@/libs/constants/messages";
 import logger from "@/libs/logger";
+import { checkRateLimit } from "@/libs/rate-limit";
 
 // Set max duration for API route to 60 seconds
 export const maxDuration = 60;
@@ -27,12 +28,18 @@ const requestSchema = z.object({
         ),
 });
 
-/** Map internal error signals to safe, user-facing error keys */
-/** Map internal error signals to safe, user-facing error keys */
 
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
+        // 1. IP-level rate limit — protects YouTube API quota from abuse
+        // This runs before session auth to block unauthenticated hammering too.
+        const limitResult = await checkRateLimit(req, {
+            keyPrefix: "youtube_comments",
+            points: 15,
+            duration: 60,
+        });
+        if (limitResult) return limitResult;
+
         const session = await auth();
 
         if (!session?.user?.email) {

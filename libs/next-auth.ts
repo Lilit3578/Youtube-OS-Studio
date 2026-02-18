@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
@@ -18,7 +18,7 @@ if (!process.env.NEXTAUTH_SECRET) {
 // Optional Google OAuth credentials
 const hasGoogleAuth = process.env.GOOGLE_ID && process.env.GOOGLE_SECRET;
 
-export const authOptions = {
+export const authOptions: NextAuthConfig = {
   // Set any random key in .env.local
   secret: process.env.NEXTAUTH_SECRET,
   trustHost: true,
@@ -97,7 +97,7 @@ export const authOptions = {
   ),
 
   callbacks: {
-    signIn: async ({ user, account }: any) => {
+    signIn: async ({ user, account }) => {
       // Add custom fields to user document on sign in
       if (user && account) {
         try {
@@ -137,16 +137,16 @@ export const authOptions = {
       }
       return true;
     },
-    session: async ({ session, token }: any) => {
+    session: async ({ session, token }) => {
       if (session?.user) {
-        session.user.id = token.sub;
+        session.user.id = token.sub ?? "";
         session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture;
+        session.user.email = token.email ?? "";
+        session.user.image = token.picture as string | null | undefined;
       }
       return session;
     },
-    jwt: async ({ token, user, trigger, session }: any) => {
+    jwt: async ({ token, user, trigger, session }) => {
       if (user) {
         token.id = user.id;
         token.email = user.email;

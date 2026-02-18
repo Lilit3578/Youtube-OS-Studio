@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 import UrlInputSection from "@/components/tools/comments/UrlInputSection";
 import CommentsHeader from "@/components/tools/comments/CommentsHeader";
@@ -139,7 +139,7 @@ export default function CommentExplorerPage() {
         }
     };
 
-    const handleDownload = (format: "csv" | "excel") => {
+    const handleDownload = async (format: "csv" | "excel") => {
         if (comments.length === 0) return;
 
         const dataToExport = comments.map((c, index) => ({
@@ -152,8 +152,18 @@ export default function CommentExplorerPage() {
         }));
 
         if (format === "csv") {
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
+            // Native CSV generation — no library needed
+            const headers = ["Line", "Date", "Likes", "Replies", "Intent", "Comment"];
+            const rows = dataToExport.map(row =>
+                headers.map(h => {
+                    const val = String((row as Record<string, unknown>)[h] ?? "");
+                    // Wrap in quotes if it contains commas, quotes, or newlines
+                    return val.includes(",") || val.includes('"') || val.includes("\n")
+                        ? `"${val.replace(/"/g, '""')}"`
+                        : val;
+                }).join(",")
+            );
+            const csvOutput = [headers.join(","), ...rows].join("\n");
 
             const blob = new Blob([csvOutput], { type: "text/csv;charset=utf-8;" });
             const blobUrl = URL.createObjectURL(blob);
@@ -165,10 +175,32 @@ export default function CommentExplorerPage() {
             document.body.removeChild(link);
             URL.revokeObjectURL(blobUrl);
         } else {
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Comments");
-            XLSX.writeFile(workbook, "youtube_comments.xlsx");
+            // Excel export via exceljs
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("Comments");
+
+            worksheet.columns = [
+                { header: "Line", key: "Line", width: 8 },
+                { header: "Date", key: "Date", width: 22 },
+                { header: "Likes", key: "Likes", width: 8 },
+                { header: "Replies", key: "Replies", width: 10 },
+                { header: "Intent", key: "Intent", width: 12 },
+                { header: "Comment", key: "Comment", width: 80 },
+            ];
+
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.addRows(dataToExport);
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "youtube_comments.xlsx";
+            link.click();
+            URL.revokeObjectURL(url);
         }
     };
 

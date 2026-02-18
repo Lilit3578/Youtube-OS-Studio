@@ -8,6 +8,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import toast from "react-hot-toast";
@@ -162,10 +163,10 @@ export default function SettingsPage() {
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 pt-2">
-                        <p className="body text-muted-foreground">
+                        <DialogDescription className="body text-muted-foreground">
                             This action is <strong className="text-destructive">permanent and irreversible</strong>.
                             All your data and usage history will be deleted.
-                        </p>
+                        </DialogDescription>
                         <div>
                             <label className="block p-medium text-foreground mb-1">
                                 Type <strong>DELETE</strong> to confirm

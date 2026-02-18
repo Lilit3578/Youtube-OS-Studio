@@ -161,6 +161,13 @@ export async function GET(req: NextRequest) {
             );
         }
 
+        if (!VALID_TOOL_IDS.includes(toolId)) {
+            return NextResponse.json(
+                { error: "Invalid tool ID" },
+                { status: 400 }
+            );
+        }
+
         await connectMongo();
 
         const user = await User.findOne({ email: session.user.email }).select(
@@ -175,7 +182,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json({ registered });
     } catch (error) {
-        console.error("Error checking interest:", error);
+        logger.error({ err: error }, "Error checking interest");
         return NextResponse.json(
             { error: "Failed to check interest" },
             { status: 500 }

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/libs/next-auth";
 import connectMongo from "@/libs/mongoose";
 import User from "@/models/User";
 import AdminExport from "@/components/AdminExport";
@@ -15,6 +17,12 @@ const formatDate = (date: Date) => {
 };
 
 export default async function AdminDashboard() {
+    // Auth guard: only allow the designated admin
+    const session = await auth();
+    if (!session?.user?.email || session.user.email !== process.env.ADMIN_EMAIL) {
+        redirect("/");
+    }
+
     await connectMongo();
 
     // 1. Fetch Stats

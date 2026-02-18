@@ -1,6 +1,23 @@
 import mongoose from "mongoose";
 import toJSON from "./plugins/toJSON";
 
+// TypeScript interface matching the schema
+export interface IUser {
+  _id: mongoose.Types.ObjectId;
+  email: string;
+  name?: string;
+  image?: string;
+  authProviders: string[];
+  usage: {
+    metadataInspector: { count: number; lastResetDate: Date };
+    commentExplorer: { count: number; lastResetDate: Date };
+    toolRequests: { count: number; lastResetDate: Date };
+  };
+  interests: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // USER SCHEMA - Matches PRD Section 5 (Schema Structure)
 const userSchema = new mongoose.Schema(
   {
@@ -53,4 +70,4 @@ const userSchema = new mongoose.Schema(
 // add plugin that converts mongoose to json
 userSchema.plugin(toJSON);
 
-export default (mongoose.models.User || mongoose.model("User", userSchema)) as mongoose.Model<any>;
+export default (mongoose.models.User || mongoose.model<IUser>("User", userSchema)) as mongoose.Model<IUser>;

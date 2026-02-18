@@ -1,5 +1,22 @@
-import axios from "axios";
 import { Comment, CommentIntent } from "@/types/comments";
+import logger from "./logger";
+
+/** Shape of a single item from the YouTube commentThreads API */
+interface YouTubeCommentItem {
+    id: string;
+    snippet: {
+        totalReplyCount: number;
+        topLevelComment: {
+            snippet: {
+                textDisplay: string;
+                authorDisplayName: string;
+                authorProfileImageUrl: string;
+                likeCount: number;
+                publishedAt: string;
+            };
+        };
+    };
+}
 
 /**
  * Extract YouTube video ID from various URL formats
@@ -57,25 +74,36 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
         );
     }
 
+    const params = new URLSearchParams({
+        part: "snippet",
+        videoId,
+        maxResults: "100",
+        textFormat: "plainText",
+        order: "relevance",
+        key: apiKey,
+    });
+
     try {
-        const response = await axios.get(
-            "https://www.googleapis.com/youtube/v3/commentThreads",
-            {
-                params: {
-                    part: "snippet",
-                    videoId: videoId,
-                    maxResults: 100,
-                    textFormat: "plainText",
-                    order: "relevance",
-                    key: apiKey,
-                },
-            }
+        const res = await fetch(
+            `https://www.googleapis.com/youtube/v3/commentThreads?${params}`,
+            { next: { revalidate: 0 } } // No caching — always fresh
         );
 
-        const items = response.data.items || [];
+        if (!res.ok) {
+            if (res.status === 403) {
+                throw new Error("YouTube API quota exceeded or API key invalid");
+            }
+            if (res.status === 404) {
+                throw new Error("Video not found or comments are disabled");
+            }
+            throw new Error(`YouTube API error: ${res.status}`);
+        }
+
+        const json = await res.json() as { items?: YouTubeCommentItem[] };
+        const items: YouTubeCommentItem[] = json.items || [];
 
         const comments: Comment[] = items
-            .map((item: any) => {
+            .map((item) => {
                 const snippet = item?.snippet?.topLevelComment?.snippet;
                 if (!snippet) return null;
 
@@ -105,16 +133,18 @@ export const fetchComments = async (videoId: string): Promise<Comment[]> => {
             .filter((c: Comment | null): c is Comment => c !== null);
 
         return comments;
-    } catch (error: any) {
-        // Enhance error messages for common issues
-        if (error.response?.status === 403) {
-            throw new Error("YouTube API quota exceeded or API key invalid");
-        }
-        if (error.response?.status === 404) {
-            throw new Error("Video not found or comments are disabled");
+    } catch (error: unknown) {
+        const err = error as { message?: string };
+        // Re-throw known errors (quota, not found) without extra logging
+        if (
+            err?.message?.includes("YouTube API quota exceeded") ||
+            err?.message?.includes("Video not found") ||
+            err?.message?.includes("YOUTUBE_API_KEY")
+        ) {
+            throw error;
         }
 
-        console.error("Error fetching YouTube comments:", error);
+        logger.error({ err: error }, "Error fetching YouTube comments");
         throw error;
     }
 };
